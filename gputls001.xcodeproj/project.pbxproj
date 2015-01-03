@@ -8,16 +8,19 @@
 
 /* Begin PBXBuildFile section */
 		428F3A1E1A57C2EA00F3B2B2 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 428F3A1D1A57C2EA00F3B2B2 /* main.cpp */; };
+		42FBC42E1A57C3EF00C7138D /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42FBC42D1A57C3EF00C7138D /* OpenCL.framework */; };
+		42FBC4301A57C5F700C7138D /* gputls.cl in Sources */ = {isa = PBXBuildFile; fileRef = 42FBC42F1A57C5F700C7138D /* gputls.cl */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		428F3A181A57C2EA00F3B2B2 /* CopyFiles */ = {
+		428F3A181A57C2EA00F3B2B2 /* Copy Files */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
 			dstSubfolderSpec = 0;
 			files = (
 			);
+			name = "Copy Files";
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -25,6 +28,8 @@
 /* Begin PBXFileReference section */
 		428F3A1A1A57C2EA00F3B2B2 /* gputls001 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = gputls001; sourceTree = BUILT_PRODUCTS_DIR; };
 		428F3A1D1A57C2EA00F3B2B2 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		42FBC42D1A57C3EF00C7138D /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = ../../../../../System/Library/Frameworks/OpenCL.framework; sourceTree = "<group>"; };
+		42FBC42F1A57C5F700C7138D /* gputls.cl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.opencl; path = gputls.cl; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				42FBC42E1A57C3EF00C7138D /* OpenCL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -41,6 +47,7 @@
 		428F3A111A57C2EA00F3B2B2 = {
 			isa = PBXGroup;
 			children = (
+				42FBC42D1A57C3EF00C7138D /* OpenCL.framework */,
 				428F3A1C1A57C2EA00F3B2B2 /* gputls001 */,
 				428F3A1B1A57C2EA00F3B2B2 /* Products */,
 			);
@@ -58,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				428F3A1D1A57C2EA00F3B2B2 /* main.cpp */,
+				42FBC42F1A57C5F700C7138D /* gputls.cl */,
 			);
 			path = gputls001;
 			sourceTree = "<group>";
@@ -71,7 +79,7 @@
 			buildPhases = (
 				428F3A161A57C2EA00F3B2B2 /* Sources */,
 				428F3A171A57C2EA00F3B2B2 /* Frameworks */,
-				428F3A181A57C2EA00F3B2B2 /* CopyFiles */,
+				428F3A181A57C2EA00F3B2B2 /* Copy Files */,
 			);
 			buildRules = (
 			);
@@ -119,6 +127,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				428F3A1E1A57C2EA00F3B2B2 /* main.cpp in Sources */,
+				42FBC4301A57C5F700C7138D /* gputls.cl in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -161,6 +170,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OPENCL_COMPILER_VERSION = CL1.2;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -195,6 +205,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OPENCL_COMPILER_VERSION = CL1.2;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -202,6 +213,7 @@
 		428F3A221A57C2EA00F3B2B2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OPENCL_COMPILER_VERSION = CL1.2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -209,6 +221,7 @@
 		428F3A231A57C2EA00F3B2B2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				OPENCL_COMPILER_VERSION = CL1.2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -232,6 +245,7 @@
 				428F3A231A57C2EA00F3B2B2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
