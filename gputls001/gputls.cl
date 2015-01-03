@@ -49,7 +49,6 @@ kernel void square(global float *input, global float *output, global TraceNode *
  perform sum reduction on writeCount and writeTo
 */
 
-
 kernel void dependency_checking(global TraceNode *readTrace, global TraceNode *writeTrace, global int *readTo, global int *writeTo, global int *writeCount, global int *misspeculation) {
     
     size_t tid = get_global_id(0);
@@ -68,14 +67,15 @@ kernel void dependency_checking(global TraceNode *readTrace, global TraceNode *w
     // parallem sum reduction on writeTo[] and writeCount[]
     for (size_t s = ARRAY_SIZE / 2; s > 0; s >>= 1) {
         if (tid < s) {
-            writeTo[tid] += writeTo[tid];
-            writeCount[tid] += writeCount[tid];
-            barrier(CLK_GLOBAL_MEM_FENCE);
+            writeTo[tid] += writeTo[tid + s];
+            writeCount[tid] += writeCount[tid + s];
         }
+        
+        barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
     }
     
     if (tid == 0) { // writeTo[0] and writeCount[0] are the sums, check WAW
-        if (writeTo[0] < writeCount[9]) {
+        if (writeTo[0] < writeCount[0]) {
             //misspeculation
             atomic_inc(misspeculation);
         }
@@ -85,6 +85,7 @@ kernel void dependency_checking(global TraceNode *readTrace, global TraceNode *w
         atomic_inc(misspeculation);
     }
     
+    printf("%d\n", writeTo[tid]);
     
 }
 

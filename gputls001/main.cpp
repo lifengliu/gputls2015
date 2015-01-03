@@ -71,11 +71,17 @@ int main (int argc, const char * argv[]) {
     
     float* host_in = (float*) malloc(sizeof(cl_float) * NUM_VALUES);
     
+    int *write_to_in = (int *) malloc(sizeof(cl_int) * NUM_VALUES);
+    
+    int sum_actual = 0;
     for (i = 0; i < NUM_VALUES; i++) {
         host_in[i] = (cl_float) i;
+        write_to_in[i] = (cl_int) i;
+        sum_actual += i;
     }
     
     float* host_out = (float*) malloc(sizeof(cl_float) * NUM_VALUES);
+    int *sum_out = (int *) malloc(sizeof(cl_int));
     
     void* device_in  = gcl_malloc(sizeof(cl_float) * NUM_VALUES, host_in, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
     
@@ -83,6 +89,14 @@ int main (int argc, const char * argv[]) {
     
     void *device_read_set = gcl_malloc(sizeof(struct TraceNode) * NUM_VALUES, NULL, CL_MEM_READ_WRITE);
     void *device_write_set = gcl_malloc(sizeof(struct TraceNode) * NUM_VALUES, NULL, CL_MEM_READ_WRITE);
+    void *device_read_to = gcl_malloc(sizeof(cl_int) * NUM_VALUES, NULL, CL_MEM_READ_WRITE);
+    
+    void *device_write_to = gcl_malloc(sizeof(cl_int) * NUM_VALUES, write_to_in, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR);
+    
+    void *device_write_count = gcl_malloc(sizeof(cl_int) * NUM_VALUES, NULL, CL_MEM_READ_WRITE);
+    
+    void *device_misspeculation = gcl_malloc(sizeof(cl_int), NULL, CL_MEM_WRITE_ONLY);
+    
     
     dispatch_sync(queue, ^{
         
@@ -106,8 +120,6 @@ int main (int argc, const char * argv[]) {
         
         size_t kernel_prefered_work_group_size_multiple;
         
-        //CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE
-        
         gcl_get_kernel_block_workgroup_info(square_kernel, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(kernel_prefered_work_group_size_multiple), &kernel_prefered_work_group_size_multiple, NULL);
         
         fprintf(stdout, "kernel_prefered_work_group_size_multiple = %lu\n", kernel_prefered_work_group_size_multiple);
@@ -116,24 +128,33 @@ int main (int argc, const char * argv[]) {
             1,
             {0, 0, 0},
             {NUM_VALUES, 0, 0},    // The global range—this is how many items
-            {kernel_prefered_work_group_size_multiple, 0, 0}          // The local size of each workgroup.  This
+            {512, 0, 0}          // The local size of each workgroup.  This
         };
         
-        square_kernel(&range,(cl_float*)device_in, (cl_float*)device_out, (struct TraceNode *) device_read_set, (struct TraceNode *) device_write_set);
+        //square_kernel(&range,(cl_float*)device_in, (cl_float*)device_out, (struct TraceNode *) device_read_set, (struct TraceNode *) device_write_set);
         
-        gcl_memcpy(host_out, device_out, sizeof(cl_float) * NUM_VALUES);
+        dependency_checking_kernel(&range, (TraceNode *) device_read_set, (TraceNode *) device_write_set, (cl_int *) device_read_to, (cl_int *) device_write_to, (cl_int *) device_write_count, (cl_int *) device_misspeculation);
+        
+        //gcl_memcpy(host_out, device_out, sizeof(cl_float) * NUM_VALUES);
+        gcl_memcpy(sum_out, device_write_to, sizeof(cl_int));
+        
         
     });
     
+    fprintf(stdout, "%d\n", sum_out[0]);
+    fprintf(stdout, "%d\n", sum_actual);
     
-    if ( validate(host_in, host_out)) {
-        fprintf(stdout, "All values were properly squared.\n");
-    }
+    //if ( validate(host_in, host_out)) {
+    //   fprintf(stdout, "All values were properly squared.\n");
+    //}
     
     gcl_free(device_in);
     gcl_free(device_out);
     gcl_free(device_read_set);
     gcl_free(device_write_set);
+    gcl_free(device_write_to);
+    gcl_free(device_read_to);
+    gcl_free(device_misspeculation);
     
     free(host_in);
     free(host_out);
