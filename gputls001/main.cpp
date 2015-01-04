@@ -11,8 +11,7 @@
 #include <OpenCL/opencl.h>
 
 #include "gputls.cl.h"
-
-#define NUM_VALUES 1024
+#include "gputlsconsts.h"
 
 static int validate(cl_float* input, cl_float* output) {
     int i;

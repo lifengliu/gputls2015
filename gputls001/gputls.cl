@@ -1,11 +1,11 @@
-#define TRACE_SIZE 5
-#define ARRAY_SIZE 1024
 
 // array size denotes : input and output size
 //                      writeCount size
 //                      writeTo size
 //
 // it is a multiple of wavefront size
+
+#include "gputlsconsts.h"
 
 typedef struct TraceNode {
     global int size;
@@ -65,7 +65,7 @@ kernel void dependency_checking(global TraceNode *readTrace, global TraceNode *w
     
     
     // parallem sum reduction on writeTo[] and writeCount[]
-    for (size_t s = ARRAY_SIZE / 2; s > 0; s >>= 1) {
+    for (size_t s = NUM_VALUES / 2; s > 0; s >>= 1) {
         if (tid < s) {
             writeTo[tid] += writeTo[tid + s];
             writeCount[tid] += writeCount[tid + s];
@@ -76,13 +76,12 @@ kernel void dependency_checking(global TraceNode *readTrace, global TraceNode *w
     
     if (tid == 0) { // writeTo[0] and writeCount[0] are the sums, check WAW
         if (writeTo[0] < writeCount[0]) {
-            //misspeculation
-            atomic_inc(misspeculation);
+            *misspeculation = 1;
         }
     }
     
-    if (tid < ARRAY_SIZE && (readTo[tid] & writeTo[tid])) {
-        atomic_inc(misspeculation);
+    if (tid < NUM_VALUES && (readTo[tid] & writeTo[tid])) {
+        *misspeculation = 1;
     }
     
     printf("%d\n", writeTo[tid]);
