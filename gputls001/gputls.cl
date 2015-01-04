@@ -20,13 +20,13 @@ float multiplyfunc(float a, float b) {
 }
 
 
-float spec_read(size_t threadId, global float *base_arr, global int index, global TraceNode *readTrace) {
+float spec_read(size_t threadId, global float *base_arr, int index, global TraceNode *readTrace) {
     readTrace[threadId].indices[readTrace[threadId].size++] = index;
     return base_arr[index];
 }
 
 
-void spec_write(size_t threadId, global float *base_arr, global int index, float value, TraceNode *writeTrace) {
+void spec_write(size_t threadId, global float *base_arr, int index, float value, TraceNode *writeTrace) {
     writeTrace[threadId].indices[writeTrace[threadId].size++] = index;
     base_arr[index] = value;
 }
