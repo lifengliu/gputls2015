@@ -30,6 +30,7 @@
 		428F3A1D1A57C2EA00F3B2B2 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		42FBC42D1A57C3EF00C7138D /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = ../../../../../System/Library/Frameworks/OpenCL.framework; sourceTree = "<group>"; };
 		42FBC42F1A57C5F700C7138D /* gputls.cl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.opencl; path = gputls.cl; sourceTree = "<group>"; };
+		42FBC4311A5917C300C7138D /* gputlsconsts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gputlsconsts.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +67,7 @@
 			children = (
 				428F3A1D1A57C2EA00F3B2B2 /* main.cpp */,
 				42FBC42F1A57C5F700C7138D /* gputls.cl */,
+				42FBC4311A5917C300C7138D /* gputlsconsts.h */,
 			);
 			path = gputls001;
 			sourceTree = "<group>";
