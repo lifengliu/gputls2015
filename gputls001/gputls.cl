@@ -15,18 +15,13 @@ typedef struct TraceNode {
 } TraceNode;
 
 
-float multiplyfunc(float a, float b) {
-    return a * b;
-}
-
-
 float spec_read(size_t threadId, global float *base_arr, int index, global TraceNode *readTrace) {
     readTrace[threadId].indices[readTrace[threadId].size++] = index;
     return base_arr[index];
 }
 
 
-void spec_write(size_t threadId, global float *base_arr, int index, float value, TraceNode *writeTrace) {
+void spec_write(size_t threadId, global float *base_arr, int index, float value, global TraceNode *writeTrace) {
     writeTrace[threadId].indices[writeTrace[threadId].size++] = index;
     base_arr[index] = value;
 }
@@ -82,32 +77,59 @@ kernel void dependency_checking(global TraceNode *readTrace, global TraceNode *w
         *misspeculation = 1;
     }
     
-    printf("%d\n", writeTo[tid]);
+    //printf("%d\n", writeTo[tid]);
+    
+}
+
+
+/*
+ *
+ *   originally
+ *   this is a loop  
+ *
+ *    for int i = 0; i < NUM_VALUES; i ++
+ *         B[i] = A[P[i]]
+ *         A[Q[i]] = 100
+ *
+ *
+ *   it will be converted to the kernel below
+ *
+ *
+ *
+ */
+kernel void test_kernel(global float *A, global float *B, global int *P, global int *Q, global TraceNode *readTrace, global TraceNode *writeTrace) {
+    
+    size_t tid = get_global_id(0);
+    
+    //printf("%.2f ", A[tid]);
+    
+    //printf("tid %d P %d\n", tid, P[tid]);
+    
+    B[tid] = spec_read(tid, A, P[tid], readTrace); //100
+
+    //printf("tid %d", tid);
+    
+    spec_write(tid, A, Q[tid], 100, writeTrace);
     
 }
 
 
 
-
-
-
-
-
-kernel void square(global float *input, global float *output, global TraceNode *readSet, global TraceNode *writeSet) {
-    
-    size_t i = get_global_id(0);
-    char conflict;
-    //
-    //float a1 = spec_read(input + i, read_set, write_set, &conflict);
-    //float b1 = spec_read(input + i, read_set, write_set, &conflict);
-    
-    
-    barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
-    
-    //printf("%d a = %.2f b = %.2f address = %x conflict = %d\n", i, a1, b1, input + i, conflict);
-    
-    output[i] = input[i] * input[i];
-}
+//kernel void square(global float *input, global float *output, global TraceNode *readSet, global TraceNode *writeSet) {
+//    
+//    size_t i = get_global_id(0);
+//    char conflict;
+//    //
+//    //float a1 = spec_read(input + i, read_set, write_set, &conflict);
+//    //float b1 = spec_read(input + i, read_set, write_set, &conflict);
+//    
+//    
+//    barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+//    
+//    //printf("%d a = %.2f b = %.2f address = %x conflict = %d\n", i, a1, b1, input + i, conflict);
+//    
+//    output[i] = input[i] * input[i];
+//}
 
 
 
