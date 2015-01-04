@@ -5,11 +5,13 @@
 //
 // it is a multiple of wavefront size
 
+
 #include "gputlsconsts.h"
 
 typedef struct TraceNode {
     global int size;
-    global float *address[TRACE_SIZE];
+    global int indices[TRACE_SIZE];  // record index, not address
+    //for the case containing multiple arrays, maybe a code generator is needed.
 } TraceNode;
 
 
@@ -18,15 +20,78 @@ float multiplyfunc(float a, float b) {
 }
 
 
-float spec_read(size_t threadId, global float *address, global TraceNode *readTrace) {
-    readTrace[threadId].address[readTrace[threadId].size++] = address;
-    return *address;
+float spec_read(size_t threadId, global float *base_arr, global int index, global TraceNode *readTrace) {
+    readTrace[threadId].indices[readTrace[threadId].size++] = index;
+    return base_arr[index];
 }
 
-void spec_write(size_t threadId, global float *address, float value, TraceNode *writeTrace) {
-    writeTrace[threadId].address[writeTrace[threadId].size++] = address;
-    *address = value;
+
+void spec_write(size_t threadId, global float *base_arr, global int index, float value, TraceNode *writeTrace) {
+    writeTrace[threadId].indices[writeTrace[threadId].size++] = index;
+    base_arr[index] = value;
 }
+
+
+/**
+ *
+ *   after speculative execution, 
+ *   we use the read_trace and write_trace to perform dependency checking
+ *
+ */
+kernel void dependency_checking(global TraceNode *readTrace, global TraceNode *writeTrace, global int *readTo, global int *writeTo, global int *writeCount, global int *misspeculation) {
+    
+    size_t tid = get_global_id(0);
+    
+    for (int i = 0; i < readTrace[tid].size; i++) {
+        char exist_in_write = 0;
+        for (int j = 0; j < writeTrace[tid].size; j++) {
+            if (readTrace[tid].indices[i] == writeTrace[tid].indices[j]) {
+                exist_in_write = 1;
+                break;
+            }
+        }
+        
+        if (!exist_in_write) {
+            readTo[readTrace[tid].indices[i]] = 1;
+        }
+    }
+    
+    for (int i = 0; i < writeTrace[tid].size; i++) {
+        writeTo[writeTrace[tid].indices[i]] = 1;
+        writeCount[tid]++;
+    }
+    
+    // parallel sum reduction on writeTo[] and writeCount[]
+    for (size_t s = NUM_VALUES / 2; s > 0; s >>= 1) {
+        if (tid < s) {
+            writeTo[tid] += writeTo[tid + s];
+            writeCount[tid] += writeCount[tid + s];
+        }
+        
+        barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+    }
+    
+    
+    if (tid == 0) { // writeTo[0] and writeCount[0] are the sums, check WAW
+        if (writeTo[0] < writeCount[0]) {
+            *misspeculation = 1;
+        }
+    }
+    
+    if (tid < NUM_VALUES && (readTo[tid] & writeTo[tid])) {
+        *misspeculation = 1;
+    }
+    
+    printf("%d\n", writeTo[tid]);
+    
+}
+
+
+
+
+
+
+
 
 kernel void square(global float *input, global float *output, global TraceNode *readSet, global TraceNode *writeSet) {
     
@@ -44,49 +109,7 @@ kernel void square(global float *input, global float *output, global TraceNode *
     output[i] = input[i] * input[i];
 }
 
-/*
- before dependency checking
- perform sum reduction on writeCount and writeTo
-*/
 
-kernel void dependency_checking(global TraceNode *readTrace, global TraceNode *writeTrace, global int *readTo, global int *writeTo, global int *writeCount, global int *misspeculation) {
-    
-    size_t tid = get_global_id(0);
-    
-    for (int i = 0; i < readTrace[tid].size; i++) {
-        char exist_in_write = 0;
-        for (int j = 0; j < writeTrace[tid].size; j++) {
-            if (readTrace[tid].address[i] == writeTrace[tid].address[j]) {
-                exist_in_write = 1;
-                break;
-            }
-        }
-    }
-    
-    
-    // parallem sum reduction on writeTo[] and writeCount[]
-    for (size_t s = NUM_VALUES / 2; s > 0; s >>= 1) {
-        if (tid < s) {
-            writeTo[tid] += writeTo[tid + s];
-            writeCount[tid] += writeCount[tid + s];
-        }
-        
-        barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
-    }
-    
-    if (tid == 0) { // writeTo[0] and writeCount[0] are the sums, check WAW
-        if (writeTo[0] < writeCount[0]) {
-            *misspeculation = 1;
-        }
-    }
-    
-    if (tid < NUM_VALUES && (readTo[tid] & writeTo[tid])) {
-        *misspeculation = 1;
-    }
-    
-    printf("%d\n", writeTo[tid]);
-    
-}
 
 
 

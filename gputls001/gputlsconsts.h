@@ -8,7 +8,13 @@
 
 #ifndef gputls001_gputlsconsts_h
 #define gputls001_gputlsconsts_h
+
 #define TRACE_SIZE 5
+
+#define READ_TRACE_SIZE 5
+
+#define WRITE_TRACE_SIZE 5
+
 #define NUM_VALUES 1024
 
 
