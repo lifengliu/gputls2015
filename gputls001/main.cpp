@@ -4,17 +4,7 @@
 //#include "gputls.cl.h"
 #include "gputlsconsts.h"
 
-static void display_device(cl_device_id device) {
-    char name_buf[128];
-    char vendor_buf[128];
-    
-    clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(char) * 128, name_buf, NULL);
-    clGetDeviceInfo(device, CL_DEVICE_VENDOR, sizeof(char) * 128, vendor_buf, NULL);
-    
-    fprintf(stdout, "Using OpenCL device: %s %s\n", vendor_buf, name_buf);
-    
-}
-
+#include "utils.h"
 
 
 int main (int argc, const char * argv[]) {
@@ -177,6 +167,8 @@ int main (int argc, const char * argv[]) {
     dispatch_release(queue);
     */
 	//printf("hello world\n");
+
+	printfunc::printPlatformAndDevices();
 	return 0;
 }
 
