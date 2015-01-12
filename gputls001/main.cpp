@@ -1,7 +1,7 @@
 #include <cstdio>
-#include <OpenCL/opencl.h>
+#include <CL/opencl.h>
 
-#include "gputls.cl.h"
+//#include "gputls.cl.h"
 #include "gputlsconsts.h"
 
 static void display_device(cl_device_id device) {
@@ -16,16 +16,9 @@ static void display_device(cl_device_id device) {
 }
 
 
-static void testcase_without_dependency() {
-    
-}
-
-static void testcase_with_dependency() {
-    
-}
 
 int main (int argc, const char * argv[]) {
-    char device_name[128];
+/*    char device_name[128];
     cl_context context = gcl_get_context();
     
     size_t length;
@@ -182,6 +175,9 @@ int main (int argc, const char * argv[]) {
     gcl_free(device_misspeculation);
     
     dispatch_release(queue);
+    */
+	//printf("hello world\n");
+	return 0;
 }
 
 
