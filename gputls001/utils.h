@@ -11,6 +11,7 @@
 #include <CL/opencl.h>
 #include <memory>
 #include <vector>
+#include <cstring>
 
 namespace gputls {
 using std::auto_ptr;
@@ -69,7 +70,51 @@ cl_device_id *getDevices(cl_platform_id platform,
 	cl_device_id *devices = new cl_device_id[deviceNum];
 	cl_int clStatus = clGetDeviceIDs(platform, type, deviceNum, devices, NULL);
 
-	return devices;
+	return clStatus == CL_SUCCESS ? devices : NULL;
+}
+
+cl_device_id getOneGPUDevice() {
+	cl_platform_id *plats = getPlatforms();
+	cl_device_id *devices = getDevices(plats[0], CL_DEVICE_TYPE_GPU);
+	delete[] plats;
+	cl_device_id device_id_ret = devices[0];
+	delete[] devices;
+	return device_id_ret;
+}
+
+char *loadFile(const char *fileName, int *fileSize) {
+
+	FILE *fp;
+	long lSize;
+	char *buffer;
+
+	fp = fopen(fileName, "rb");
+	if (!fp)
+		perror(fileName), exit(1);
+
+	fseek(fp, 0L, SEEK_END);
+	lSize = ftell(fp);
+	rewind(fp);
+
+	if (fileSize != NULL) {
+		*fileSize = lSize;
+	}
+
+	/* allocate memory for entire content */
+	buffer = (char *) calloc(1, lSize + 1);
+	if (!buffer)
+		fclose(fp), fputs("memory alloc fails", stderr), exit(1);
+
+	/* copy the file into the buffer */
+	if (1 != fread(buffer, lSize, 1, fp))
+		fclose(fp), free(buffer), fputs("entire read fails", stderr), exit(1);
+
+	/* do your work here, buffer is a string contains the whole text */
+
+	fclose(fp);
+
+	return buffer;
+	//free(buffer);
 }
 
 }
@@ -79,14 +124,16 @@ namespace printfunc {
 void display_device(cl_device_id device) {
 	char name_buf[128];
 	char vendor_buf[128];
+	char ext_buf[8000];
 
 	clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(char) * 128, name_buf, NULL);
-	clGetDeviceInfo(device, CL_DEVICE_VENDOR, sizeof(char) * 128, vendor_buf,
-			NULL);
+	clGetDeviceInfo(device, CL_DEVICE_VENDOR, sizeof(char) * 128, vendor_buf, NULL);
 
-	fprintf(stdout, "Using OpenCL device: %s %s\n", vendor_buf, name_buf);
+	clGetDeviceInfo(device, CL_DEVICE_EXTENSIONS, sizeof(char) * 8000, ext_buf, NULL);
+	fprintf(stdout, "Using OpenCL device: %s %s\n with\n %s \nextension\n\n", vendor_buf, name_buf, ext_buf);
 
 }
+
 void printPlatformAndDevices() {
 	int platformNum = gputls::getPlatformNum();
 	printf("platform num = %d\n", platformNum);
@@ -111,6 +158,50 @@ void printPlatformAndDevices() {
 
 	delete[] plats;
 }
+
+void printExtensions() {
+	cl_platform_id *platforms;
+	cl_uint num_platforms;
+	cl_int err;//
+	//, platform_index = -1;
+
+	char *ext_data;
+	size_t ext_size;
+	//const char icd_ext[] = "cl_khr_icd";
+
+	err = clGetPlatformIDs(10, NULL, &num_platforms);
+
+	if (err < 0) {
+		puts("cound not find any platforms");
+		return;
+	}
+
+	platforms = (cl_platform_id *) malloc(sizeof(cl_platform_id) * num_platforms);
+
+	clGetPlatformIDs(num_platforms, platforms, NULL);
+
+	for (size_t i = 0; i < num_platforms; i++) {
+		err = clGetPlatformInfo(platforms[i], CL_PLATFORM_EXTENSIONS, 0, NULL, &ext_size);
+		if (err < 0 ) {
+			puts("could not read extension data");
+			free(platforms);
+			return;
+		}
+
+		ext_data = (char *) malloc(ext_size * sizeof(char));
+
+		clGetPlatformInfo(platforms[i], CL_PLATFORM_EXTENSIONS, ext_size, ext_data, NULL);
+
+		printf("platform %d supports extensions %s\n", i, ext_data);
+
+		free(ext_data);
+	}
+
+
+	free(platforms);
+}
+
+
 
 
 }

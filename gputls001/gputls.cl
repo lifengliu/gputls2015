@@ -6,22 +6,29 @@
 // it is a multiple of wavefront size
 
 
-#include "gputlsconsts.h"
+#define TRACE_SIZE 5
+
+#define READ_TRACE_SIZE 5
+
+#define WRITE_TRACE_SIZE 5
+
+#define NUM_VALUES 1024
+
 
 typedef struct TraceNode {
-    global int size;
-    global int indices[TRACE_SIZE];  // record index, not address
+    int size;
+    int indices[TRACE_SIZE];  // record index, not address
     //for the case containing multiple arrays, maybe a code generator is needed.
 } TraceNode;
 
 
-float spec_read(size_t threadId, global float *base_arr, int index, global TraceNode *readTrace) {
+float spec_read(size_t threadId, __global float *base_arr, int index, __global TraceNode *readTrace) {
     readTrace[threadId].indices[readTrace[threadId].size++] = index;
     return base_arr[index];
 }
 
 
-void spec_write(size_t threadId, global float *base_arr, int index, float value, global TraceNode *writeTrace) {
+void spec_write(size_t threadId, __global float *base_arr, int index, float value, __global TraceNode *writeTrace) {
     writeTrace[threadId].indices[writeTrace[threadId].size++] = index;
     base_arr[index] = value;
 }
@@ -33,7 +40,7 @@ void spec_write(size_t threadId, global float *base_arr, int index, float value,
  *   we use the read_trace and write_trace to perform dependency checking
  *
  */
-kernel void dependency_checking(global TraceNode *readTrace, global TraceNode *writeTrace, global int *readTo, global int *writeTo, global int *writeCount, global int *misspeculation) {
+__kernel void dependency_checking(__global TraceNode *readTrace, __global TraceNode *writeTrace, __global int *readTo, __global int *writeTo, __global int *writeCount, __global int *misspeculation) {
     
     size_t tid = get_global_id(0);
     
@@ -97,7 +104,7 @@ kernel void dependency_checking(global TraceNode *readTrace, global TraceNode *w
  *
  *
  */
-kernel void test_kernel(global float *A, global float *B, global int *P, global int *Q, global TraceNode *readTrace, global TraceNode *writeTrace) {
+__kernel void test_kernel(__global float *A, __global float *B, __global int *P, __global int *Q, __global TraceNode *readTrace, __global TraceNode *writeTrace) {
     
     size_t tid = get_global_id(0);
     
@@ -115,7 +122,7 @@ kernel void test_kernel(global float *A, global float *B, global int *P, global 
 
 
 
-//kernel void square(global float *input, global float *output, global TraceNode *readSet, global TraceNode *writeSet) {
+//kernel void square(__global float *input, __global float *output, __global TraceNode *readSet, __global TraceNode *writeSet) {
 //    
 //    size_t i = get_global_id(0);
 //    char conflict;

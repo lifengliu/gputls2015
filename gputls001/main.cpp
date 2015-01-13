@@ -7,7 +7,75 @@
 #include "utils.h"
 
 
-int main (int argc, const char * argv[]) {
+int main (int argc, const char *argv[]) {
+
+	float *host_A = new float[NUM_VALUES];
+	float *host_B = new float[NUM_VALUES];
+	int *host_P = new int[NUM_VALUES];
+	int *host_Q = new int[NUM_VALUES];
+
+    for (int i = 0; i < NUM_VALUES; i++) {
+        host_A[i] = i;
+        host_P[i] = i;
+        host_Q[i] = i;
+    }
+
+	cl_device_id device = gputls::getOneGPUDevice();
+	cl_int clStatus;
+	cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, &clStatus);
+	cl_command_queue command_queue = clCreateCommandQueue(context, device, 0, &clStatus);
+
+	cl_mem device_A = clCreateBuffer(context, CL_MEM_READ_WRITE, NUM_VALUES * sizeof(float), NULL, &clStatus);
+	cl_mem device_B = clCreateBuffer(context, CL_MEM_READ_WRITE, NUM_VALUES * sizeof(float), NULL, &clStatus);
+	cl_mem device_P = clCreateBuffer(context, CL_MEM_READ_ONLY, NUM_VALUES * sizeof(int), NULL, &clStatus);
+	cl_mem device_Q = clCreateBuffer(context, CL_MEM_READ_ONLY, NUM_VALUES * sizeof(int), NULL, &clStatus);
+
+	clEnqueueWriteBuffer(command_queue, device_A, CL_TRUE, 0, NUM_VALUES * sizeof(float), host_A, 0, NULL, NULL);
+	clEnqueueWriteBuffer(command_queue, device_B, CL_TRUE, 0, NUM_VALUES * sizeof(float), host_B, 0, NULL, NULL);
+
+	int sourceSize;
+	char *clSourceCode = gputls::loadFile("gputls001/gputls.cl", &sourceSize);
+
+	printf("%s\n", clSourceCode);
+
+	cl_program program = clCreateProgramWithSource(context, 1, (const char **) &clSourceCode, NULL, &clStatus);
+
+	if (clStatus != CL_SUCCESS) {
+		puts("fuck");
+	}
+
+	//const char options[] = "-cl-std=CL1.2 -cl-mad-enable -Werror";
+
+	clStatus = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+
+	if (clStatus != CL_SUCCESS) {
+		printf("clStatus = %d\n", clStatus);
+		puts("build Program Error");
+	}
+
+
+	size_t len;
+	clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, NULL, NULL, &len);
+	char *log = new char[len];
+	clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, len, log, NULL);
+
+	printf("%s\n", log);
+
+	cl_uint kernel_num;
+	clStatus = clCreateKernelsInProgram(program, 0, NULL, &kernel_num);
+
+	if (clStatus != CL_SUCCESS) {
+		puts("fuck");
+	}
+	printf("kernel num = %lu\n", kernel_num);
+
+
+
+
+
+
+
+
 /*    char device_name[128];
     cl_context context = gcl_get_context();
     
@@ -169,6 +237,7 @@ int main (int argc, const char * argv[]) {
 	//printf("hello world\n");
 
 	printfunc::printPlatformAndDevices();
+	printfunc::printExtensions();
 	return 0;
 }
 
