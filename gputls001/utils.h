@@ -82,6 +82,21 @@ cl_device_id getOneGPUDevice() {
 	return device_id_ret;
 }
 
+
+cl_kernel selectKernel(const char *kernelName, cl_kernel *kernels, int size) {
+	for (int i = 0; i < size; i++) {
+		char name[50];
+		memset(name, 0, sizeof(name));
+		clGetKernelInfo(kernels[i], CL_KERNEL_FUNCTION_NAME, 50, name, NULL);
+		if (strcmp(name, kernelName) == 0) {
+			return kernels[i];
+		}
+	}
+
+	return NULL;
+
+}
+
 char *loadFile(const char *fileName, int *fileSize) {
 
 	FILE *fp;

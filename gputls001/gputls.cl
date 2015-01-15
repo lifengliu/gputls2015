@@ -40,7 +40,18 @@ void spec_write(size_t threadId, __global float *base_arr, int index, float valu
  *   we use the read_trace and write_trace to perform dependency checking
  *
  */
-__kernel void dependency_checking(__global TraceNode *readTrace, __global TraceNode *writeTrace, __global int *readTo, __global int *writeTo, __global int *writeCount, __global int *misspeculation) {
+
+__kernel void dependency_checking
+
+(
+__global TraceNode *readTrace, 
+__global TraceNode *writeTrace, 
+__global int *readTo, 
+__global int *writeTo, 
+__global int *writeCount,
+__global int *misspeculation
+)
+{
     
     size_t tid = get_global_id(0);
     
@@ -64,7 +75,7 @@ __kernel void dependency_checking(__global TraceNode *readTrace, __global TraceN
     }
     
     // parallel sum reduction on writeTo[] and writeCount[]
-    for (size_t s = NUM_VALUES / 2; s > 0; s >>= 1) {
+    for (size_t s =  get_local_size(0) / 2; s > 0; s >>= 1) {
         if (tid < s) {
             writeTo[tid] += writeTo[tid + s];
             writeCount[tid] += writeCount[tid + s];
@@ -104,7 +115,17 @@ __kernel void dependency_checking(__global TraceNode *readTrace, __global TraceN
  *
  *
  */
-__kernel void test_kernel(__global float *A, __global float *B, __global int *P, __global int *Q, __global TraceNode *readTrace, __global TraceNode *writeTrace) {
+__kernel void test_kernel
+(
+__global float *A,
+__global float *B,
+__global int *P,
+__global int *Q,
+__global TraceNode *readTrace,
+__global TraceNode *writeTrace
+) 
+
+{
     
     size_t tid = get_global_id(0);
     
