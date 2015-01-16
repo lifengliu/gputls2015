@@ -73,9 +73,18 @@ cl_device_id *getDevices(cl_platform_id platform,
 	return clStatus == CL_SUCCESS ? devices : NULL;
 }
 
-cl_device_id getOneGPUDevice() {
+cl_device_id getOneGPUDevice(int num) {
 	cl_platform_id *plats = getPlatforms();
-	cl_device_id *devices = getDevices(plats[0], CL_DEVICE_TYPE_ALL);
+	cl_device_id *devices = getDevices(plats[0], CL_DEVICE_TYPE_GPU);
+	delete[] plats;
+	cl_device_id device_id_ret = devices[num];
+	delete[] devices;
+	return device_id_ret;
+}
+
+cl_device_id getOneCPUDevice() {
+	cl_platform_id *plats = getPlatforms();
+	cl_device_id *devices = getDevices(plats[0], CL_DEVICE_TYPE_CPU);
 	delete[] plats;
 	cl_device_id device_id_ret = devices[0];
 	delete[] devices;

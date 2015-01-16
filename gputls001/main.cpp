@@ -6,7 +6,9 @@
 
 #include "utils.h"
 
+#include <algorithm>
 
+using std::fill;
 
 typedef struct TraceNode {
     cl_int size;
@@ -15,10 +17,25 @@ typedef struct TraceNode {
 } TraceNode;
 
 
+/*float reduceHost(float array[], int size)
+{
+        float sum = array[0];
+        float c = 0.0f;
+        for (int i = 1; i < array.length; i++)
+        {
+            float y = array[i] - c;
+            float t = sum + y;
+            c = (t - sum) - y;
+            sum = t;
+        }
+        return sum;
+}*/
+
+
 int main (int argc, const char *argv[]) {
 
-	printfunc::printPlatformAndDevices();
-	printfunc::printExtensions();
+//	printfunc::printPlatformAndDevices();
+//	printfunc::printExtensions();
 
 	float *host_A = new float[NUM_VALUES];
 	float *host_B = new float[NUM_VALUES];
@@ -31,7 +48,11 @@ int main (int argc, const char *argv[]) {
         host_Q[i] = i;
     }
 
-	cl_device_id device = gputls::getOneGPUDevice();
+    //host_P[5] = 6;
+
+	cl_device_id device = gputls::getOneGPUDevice(1);
+	printfunc::display_device(device);
+
 	cl_int clStatus;
 	cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, &clStatus);
 	cl_command_queue command_queue = clCreateCommandQueue(context, device, 0, &clStatus);
@@ -77,15 +98,17 @@ int main (int argc, const char *argv[]) {
 
 	cl_mem device_read_trace = clCreateBuffer(context, CL_MEM_READ_WRITE, NUM_VALUES * sizeof(TraceNode), NULL, &clStatus);
 	cl_mem device_write_trace = clCreateBuffer(context, CL_MEM_READ_WRITE, NUM_VALUES * sizeof(TraceNode), NULL, &clStatus);
-	cl_mem device_read_to = clCreateBuffer(context, CL_MEM_READ_WRITE, NUM_VALUES * sizeof(cl_int), NULL, &clStatus);
-	cl_mem device_write_to = clCreateBuffer(context, CL_MEM_READ_WRITE, NUM_VALUES * sizeof(cl_int), NULL, &clStatus);
-	cl_mem device_write_count = clCreateBuffer(context, CL_MEM_READ_WRITE, NUM_VALUES * sizeof(cl_int), NULL, &clStatus);
-	cl_mem device_misspeculation = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(cl_int), NULL, &clStatus);
 
 
-	cl_mem device_reduce_writeTo = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(cl_int), NULL, &clStatus);
-	cl_mem device_reduce_writeCount = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(cl_int), NULL, &clStatus);
+	int *emptyIntArray = new int[NUM_VALUES];
+	fill(emptyIntArray, emptyIntArray + NUM_VALUES, 0);
 
+	cl_mem device_read_to = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, NUM_VALUES * sizeof(cl_int), emptyIntArray, &clStatus);
+	cl_mem device_write_to = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, NUM_VALUES * sizeof(cl_int), emptyIntArray, &clStatus);
+	cl_mem device_write_count = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, NUM_VALUES * sizeof(cl_int), emptyIntArray, &clStatus);
+
+	int spec = 0;
+	cl_mem device_misspeculation = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(cl_int), &spec, &clStatus);
 
 
 	clSetKernelArg(testTlsKernel, 0, sizeof(cl_mem), &device_A);
@@ -107,34 +130,105 @@ int main (int argc, const char *argv[]) {
 
 	clEnqueueReadBuffer(command_queue, device_A, CL_TRUE, 0, NUM_VALUES * sizeof(float), host_A, 0, NULL, NULL);
 
+	clFlush(command_queue);
+	clFinish(command_queue);
+
 	for (int i = 0; i < 5; i ++ ){
 		printf("%.2f\n", host_A[i]);
 	}
 
-	puts("fuck here");
+	puts("this finishes speculative execution, next we perform dependency checking \n\n\n");
 
-	clSetKernelArg(dependencyCheckingKernel, 0, sizeof(cl_mem), &device_read_trace);
-	clSetKernelArg(dependencyCheckingKernel, 1, sizeof(cl_mem), &device_write_trace);
-	clSetKernelArg(dependencyCheckingKernel, 2, sizeof(cl_mem), &device_read_to);
-	clSetKernelArg(dependencyCheckingKernel, 3, sizeof(cl_mem), &device_write_to);
-	clSetKernelArg(dependencyCheckingKernel, 4, sizeof(cl_mem), &device_write_count);
-	clSetKernelArg(dependencyCheckingKernel, 5, sizeof(cl_mem), &device_misspeculation);
+	// phase 1
+	clSetKernelArg(DC1kernel, 0, sizeof(cl_mem), &device_read_trace);
+	clSetKernelArg(DC1kernel, 1, sizeof(cl_mem), &device_write_trace);
+	clSetKernelArg(DC1kernel, 2, sizeof(cl_mem), &device_read_to);
+	clSetKernelArg(DC1kernel, 3, sizeof(cl_mem), &device_write_to);
+	clSetKernelArg(DC1kernel, 4, sizeof(cl_mem), &device_write_count);
 
-	clSetKernelArg(dependencyCheckingKernel, 6, sizeof(cl_int) * local_size, NULL);
+	clStatus = clEnqueueNDRangeKernel(command_queue, DC1kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 
-	clStatus = clEnqueueNDRangeKernel(command_queue, dependencyCheckingKernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+	int tmp_output[100];
+	clEnqueueReadBuffer(command_queue, device_write_count, CL_TRUE, 0, 100 * sizeof(int), tmp_output, 0, NULL, NULL);
 
-	int spec = -1;
-	clEnqueueReadBuffer(command_queue, device_misspeculation, CL_TRUE, 0, sizeof(cl_int), &spec, 0, NULL, NULL);
+	for (int i = 0; i < 100; i++) {
+		printf("%d ", tmp_output[i]);
+	}
+
+	puts("");
+
+	//reduction on device_write_to
+
+    size_t localWorkSize = 128;
+    size_t numWorkGroups = 64;
+    size_t globalWorkSize = numWorkGroups * localWorkSize;
+
+	cl_mem device_reducedWriteTo = clCreateBuffer(context, CL_MEM_WRITE_ONLY, numWorkGroups * sizeof(int), NULL, &clStatus);
+
+    clSetKernelArg(reduceKernel, 0, sizeof(cl_mem), &device_write_to);
+	clSetKernelArg(reduceKernel, 1, sizeof(cl_int) * localWorkSize, NULL);
+	int length = NUM_VALUES;
+	clSetKernelArg(reduceKernel, 2, sizeof(cl_int), &length);
+	clSetKernelArg(reduceKernel, 3, sizeof(cl_mem), &device_reducedWriteTo);
+
+	clStatus = clEnqueueNDRangeKernel(command_queue, reduceKernel, 1, NULL, &globalWorkSize, &localWorkSize, 0, NULL, NULL);
+
+	int *reduced_writeToResult = new int[numWorkGroups];
+	clEnqueueReadBuffer(command_queue, device_reducedWriteTo, CL_TRUE, 0, sizeof(int) * numWorkGroups, reduced_writeToResult, 0, NULL, NULL);
+
+	int writeToSum = 0;
+	for (size_t i = 0; i < numWorkGroups; i++) {
+		writeToSum += reduced_writeToResult[i];
+	}
+
+	printf("writeToSum = %d\n", writeToSum);
+	puts("");
 
 
-	clFlush(command_queue);
-	clFinish(command_queue);
+
+	// --------------------------------------------------------------------------------------------------------------
+	// ------------------------what the fuck ... need to be refactoried ..................
+	// --------------------------------------------------------------------------------------------------------------
+
+    cl_mem device_reducedWriteCount = clCreateBuffer(context, CL_MEM_WRITE_ONLY, numWorkGroups * sizeof(int), NULL, &clStatus);
+
+    clSetKernelArg(reduceKernel, 0, sizeof(cl_mem), &device_write_count);
+	clSetKernelArg(reduceKernel, 1, sizeof(cl_int) * localWorkSize, NULL);
+	clSetKernelArg(reduceKernel, 2, sizeof(cl_int), &length);
+	clSetKernelArg(reduceKernel, 3, sizeof(cl_mem), &device_reducedWriteCount);
+
+	clStatus = clEnqueueNDRangeKernel(command_queue, reduceKernel, 1, NULL, &globalWorkSize, &localWorkSize, 0, NULL, NULL);
+
+	int *reducedWriteCountResult = new int[numWorkGroups];
+
+	clEnqueueReadBuffer(command_queue, device_reducedWriteCount, CL_TRUE, 0, sizeof(int) * numWorkGroups, reducedWriteCountResult, 0, NULL, NULL);
+
+	int writeCountSum = 0;
+	for (size_t i = 0; i < numWorkGroups; i++) {
+		writeCountSum += reducedWriteCountResult[i];
+	}
+
+	printf("writeCountSum = %d\n", writeCountSum);
+	puts("");
+
+	if (writeToSum < writeCountSum) {
+		spec = 1;
+	}
 
 
+	if (spec == 0) { // launch phase 3 to check read[i] & write[i]
+		clSetKernelArg(DC3kernel, 0, sizeof(cl_mem), &device_read_to);
+		clSetKernelArg(DC3kernel, 1, sizeof(cl_mem), &device_write_to);
+		clSetKernelArg(DC3kernel, 2, sizeof(cl_mem), &device_misspeculation);
+
+		clEnqueueNDRangeKernel(command_queue, DC3kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+
+		clEnqueueReadBuffer(command_queue, device_misspeculation, CL_TRUE, 0, sizeof(int), &spec, 0, NULL, NULL);
+
+	}
 
 
-	printf("spec = %d\n", spec);
+	printf("misspec  = %d \n" , spec);
 
 	delete[] host_A;
 	delete[] host_B;

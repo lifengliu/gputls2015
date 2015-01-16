@@ -3,7 +3,6 @@
 //                      writeCount size
 //                      writeTo size
 //
-// it is a multiple of wavefront size
 
 
 #define TRACE_SIZE 5
@@ -12,7 +11,7 @@
 
 #define WRITE_TRACE_SIZE 5
 
-#define NUM_VALUES 1024
+#define NUM_VALUES 1000
 
 typedef struct TraceNode {
     int size;
@@ -22,13 +21,17 @@ typedef struct TraceNode {
 
 
 float spec_read(size_t threadId, __global float *base_arr, int index, __global TraceNode *readTrace) {
-    readTrace[threadId].indices[readTrace[threadId].size++] = index;
-    return base_arr[index];
+	readTrace[threadId].indices[readTrace[threadId].size] = index;
+	readTrace[threadId].size++;
+	
+	return base_arr[index];
 }
 
 
 void spec_write(size_t threadId, __global float *base_arr, int index, float value, __global TraceNode *writeTrace) {
-    writeTrace[threadId].indices[writeTrace[threadId].size++] = index;
+    writeTrace[threadId].indices[writeTrace[threadId].size] = index;
+    writeTrace[threadId].size++;
+    
     base_arr[index] = value;
 }
 
@@ -47,12 +50,13 @@ __global int *readTo,
 __global int *writeTo, 
 __global int *writeCount
 )
-{
+{   
+#pragma OPENCL EXTENSION cl_amd_printf : enable
     
     size_t tid = get_global_id(0);
     
     for (int i = 0; i < readTrace[tid].size; i++) {
-        char exist_in_write = 0;
+        int exist_in_write = 0;
         for (int j = 0; j < writeTrace[tid].size; j++) {
             if (readTrace[tid].indices[i] == writeTrace[tid].indices[j]) {
                 exist_in_write = 1;
@@ -68,21 +72,7 @@ __global int *writeCount
     for (int i = 0; i < writeTrace[tid].size; i++) {
         writeTo[writeTrace[tid].indices[i]] = 1;
         writeCount[tid]++;
-    }
-    
-    // parallel sum reduction on writeTo[] and writeCount[]
-    //reduce(writeTo, scratch, NUM_VALUES, writeTo);
-    //reduce(writeCount, scratch, NUM_VALUES, writeCount);
-    
-    /*for (size_t s =  get_local_size(0) / 2; s > 0; s >>= 1) {
-        if (tid < s) {
-            writeTo[tid] += writeTo[tid + s];
-            writeCount[tid] += writeCount[tid + s];
-        }
-        
-        barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
-    }*/
-       
+    }   
 }
 
 
@@ -128,19 +118,18 @@ __kernel void reduce(
 
 __kernel void dependency_checking_phase_three
 (
-__global int *readTo, 
+__global int *readTo,
 __global int *writeTo, 
-__global int *writeCount,
 __global int *misspeculation
 )
-
 {
+	size_t tid = get_global_id(0);
     
-    if (tid == 0) { // writeTo[0] and writeCount[0] are the sums, check WAW
+    /*if (tid == 0) { // writeTo[0] and writeCount[0] are the sums, check WAW
         if (writeTo[0] < writeCount[0]) {
             *misspeculation = 1;
         }
-    }
+    }*/
     
     if (tid < NUM_VALUES && (readTo[tid] & writeTo[tid])) {
         *misspeculation = 1;
@@ -176,6 +165,10 @@ __global TraceNode *writeTrace
     #pragma OPENCL EXTENSION cl_amd_printf : enable
     
     size_t tid = get_global_id(0);
+    
+    readTrace[tid].size = 0;
+    
+    writeTrace[tid].size = 0;
     
     B[tid] = spec_read(tid, A, P[tid], readTrace); //100
     
