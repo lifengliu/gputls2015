@@ -75,7 +75,7 @@ cl_device_id *getDevices(cl_platform_id platform,
 
 cl_device_id getOneGPUDevice() {
 	cl_platform_id *plats = getPlatforms();
-	cl_device_id *devices = getDevices(plats[0], CL_DEVICE_TYPE_GPU);
+	cl_device_id *devices = getDevices(plats[0], CL_DEVICE_TYPE_ALL);
 	delete[] plats;
 	cl_device_id device_id_ret = devices[0];
 	delete[] devices;

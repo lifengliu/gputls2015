@@ -15,7 +15,7 @@
 
 #define WRITE_TRACE_SIZE 5
 
-#define NUM_VALUES 10240
+#define NUM_VALUES 1024
 
 
 

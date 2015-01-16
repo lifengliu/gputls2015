@@ -14,7 +14,6 @@
 
 #define NUM_VALUES 1024
 
-
 typedef struct TraceNode {
     int size;
     int indices[TRACE_SIZE];  // record index, not address
@@ -40,16 +39,13 @@ void spec_write(size_t threadId, __global float *base_arr, int index, float valu
  *   we use the read_trace and write_trace to perform dependency checking
  *
  */
-
-__kernel void dependency_checking
-
+__kernel void dependency_checking_phase_one
 (
 __global TraceNode *readTrace, 
 __global TraceNode *writeTrace, 
 __global int *readTo, 
 __global int *writeTo, 
-__global int *writeCount,
-__global int *misspeculation
+__global int *writeCount
 )
 {
     
@@ -75,15 +71,70 @@ __global int *misspeculation
     }
     
     // parallel sum reduction on writeTo[] and writeCount[]
-    for (size_t s =  get_local_size(0) / 2; s > 0; s >>= 1) {
+    //reduce(writeTo, scratch, NUM_VALUES, writeTo);
+    //reduce(writeCount, scratch, NUM_VALUES, writeCount);
+    
+    /*for (size_t s =  get_local_size(0) / 2; s > 0; s >>= 1) {
         if (tid < s) {
             writeTo[tid] += writeTo[tid + s];
             writeCount[tid] += writeCount[tid + s];
         }
         
         barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+    }*/
+       
+}
+
+
+__kernel void reduce(
+    __global int *buffer,
+    __local int *scratch,
+    __const int length,
+    __global int *result
+)
+{
+    int globalIndex = get_global_id(0);
+    int accumulator = 0;
+
+    // Loop sequentially over chunks of input vector
+    while (globalIndex < length) 
+    {
+        int element = buffer[globalIndex];
+        accumulator += element;
+        globalIndex += get_global_size(0);
+    }
+
+    // Perform parallel reduction
+    int lid = get_local_id(0);
+    scratch[lid] = accumulator;
+    barrier(CLK_LOCAL_MEM_FENCE);
+    
+    for(int offset = get_local_size(0) / 2; offset > 0; offset = offset / 2) {
+        if (lid < offset) 
+        {
+            int other = scratch[lid + offset];
+            int mine = scratch[lid];
+            scratch[lid] = mine + other;
+        }
+        
+        barrier(CLK_LOCAL_MEM_FENCE);
     }
     
+    if (lid == 0) {
+        result[get_group_id(0)] = scratch[0];
+    }
+}
+
+
+__kernel void dependency_checking_phase_three
+(
+__global int *readTo, 
+__global int *writeTo, 
+__global int *writeCount,
+__global int *misspeculation
+)
+
+{
     
     if (tid == 0) { // writeTo[0] and writeCount[0] are the sums, check WAW
         if (writeTo[0] < writeCount[0]) {
@@ -94,11 +145,7 @@ __global int *misspeculation
     if (tid < NUM_VALUES && (readTo[tid] & writeTo[tid])) {
         *misspeculation = 1;
     }
-    
-    //printf("%d\n", writeTo[tid]);
-    
 }
-
 
 /*
  *
@@ -126,38 +173,16 @@ __global TraceNode *writeTrace
 ) 
 
 {
+    #pragma OPENCL EXTENSION cl_amd_printf : enable
     
     size_t tid = get_global_id(0);
     
-    //printf("%.2f ", A[tid]);
-    
-    //printf("tid %d P %d\n", tid, P[tid]);
-    
     B[tid] = spec_read(tid, A, P[tid], readTrace); //100
-
-    //printf("tid %d", tid);
     
     spec_write(tid, A, Q[tid], 100, writeTrace);
     
 }
 
-
-
-//kernel void square(__global float *input, __global float *output, __global TraceNode *readSet, __global TraceNode *writeSet) {
-//    
-//    size_t i = get_global_id(0);
-//    char conflict;
-//    //
-//    //float a1 = spec_read(input + i, read_set, write_set, &conflict);
-//    //float b1 = spec_read(input + i, read_set, write_set, &conflict);
-//    
-//    
-//    barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
-//    
-//    //printf("%d a = %.2f b = %.2f address = %x conflict = %d\n", i, a1, b1, input + i, conflict);
-//    
-//    output[i] = input[i] * input[i];
-//}
 
 
 
