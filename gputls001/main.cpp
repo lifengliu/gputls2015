@@ -51,7 +51,7 @@ static float func(int i) {
 	float res = 0.0f;
 
 	for (int p = 1; p <= FUNC_LOOP_NUM; p++) {
-		res += p + i;
+		res += (p + i) % 5;
 	}
 
 	return res;
@@ -59,7 +59,7 @@ static float func(int i) {
 
 
 
-static int sequentialTest1() {
+static int sequentialTest1(double *used_time) {
 
 	struct timeval tv1, tv2;
 	gettimeofday(&tv1, NULL);
@@ -72,19 +72,17 @@ static int sequentialTest1() {
 
 
 	gettimeofday(&tv2, NULL);
-	printf("Total time = %f seconds\n",
-			(double) (tv2.tv_usec - tv1.tv_usec) / 1000000
-					+ (double) (tv2.tv_sec - tv1.tv_sec));
 
+	*used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
 
 	return 0;
 }
 
 
-static int specTest1NoDependencies() {
+static int specTest1NoDependencies(double *used_time) {
 
-	cl_device_id device = gputls::getOneGPUDevice(1);
-	printfunc::display_device(device);
+	cl_device_id device = gputls::getOneGPUDevice(0);
+	//printfunc::display_device(device);
 
 	cl_int clStatus;
 	cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, &clStatus);
@@ -92,8 +90,6 @@ static int specTest1NoDependencies() {
 
 	int sourceSize;
 	char *clSourceCode = gputls::loadFile("gputls001/gputls.cl", &sourceSize);
-
-	//printf("%s\n", clSourceCode);
 
 	cl_program program = clCreateProgramWithSource(context, 1, (const char **) &clSourceCode, NULL, &clStatus);
 	clStatus = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
@@ -109,8 +105,6 @@ static int specTest1NoDependencies() {
 		return -1;
 	}
 
-
-
 	cl_kernel testTlsKernel = clCreateKernel(program, "test_kernel", &clStatus);
 
 	cl_kernel DC1kernel = clCreateKernel(program, "dependency_checking_phase_one", &clStatus);
@@ -118,11 +112,8 @@ static int specTest1NoDependencies() {
 	cl_kernel DC3kernel = clCreateKernel(program, "dependency_checking_phase_three", &clStatus);
 
 
-
-	if (clStatus != CL_SUCCESS) {
-		puts("create kernel error");
-
-	}
+	struct timeval tv1, tv2;
+	gettimeofday(&tv1, NULL);
 
 	cl_mem device_A = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, NUM_VALUES * sizeof(float), host_A, &clStatus);
 	cl_mem device_B = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, NUM_VALUES * sizeof(float), host_B, &clStatus);
@@ -148,15 +139,13 @@ static int specTest1NoDependencies() {
 	clSetKernelArg(testTlsKernel, 1, sizeof(cl_mem), &device_B);
 	clSetKernelArg(testTlsKernel, 2, sizeof(cl_mem), &device_P);
 	clSetKernelArg(testTlsKernel, 3, sizeof(cl_mem), &device_Q);
-	clSetKernelArg(testTlsKernel, 4, sizeof(cl_int), &NUM_VALUES);
+	clSetKernelArg(testTlsKernel, 4, sizeof(cl_int), &FUNC_LOOP_NUM);
 	clSetKernelArg(testTlsKernel, 5, sizeof(cl_mem), &device_read_trace);
 	clSetKernelArg(testTlsKernel, 6, sizeof(cl_mem), &device_write_trace);
 
 	size_t global_size = NUM_VALUES;
 	size_t local_size = 64;
 
-	struct timeval tv1, tv2;
-	gettimeofday(&tv1, NULL);
 
 
 	clStatus = clEnqueueNDRangeKernel(command_queue, testTlsKernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
@@ -183,8 +172,8 @@ static int specTest1NoDependencies() {
 
 	clStatus = clEnqueueNDRangeKernel(command_queue, DC1kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 
-	int tmp_output[100];
-	clEnqueueReadBuffer(command_queue, device_write_count, CL_TRUE, 0, 100 * sizeof(int), tmp_output, 0, NULL, NULL);
+	//int tmp_output[100];
+	//clEnqueueReadBuffer(command_queue, device_write_count, CL_TRUE, 0, 100 * sizeof(int), tmp_output, 0, NULL, NULL);
 
 	/*for (int i = 0; i < 100; i++) {
 		printf("%d ", tmp_output[i]);
@@ -203,8 +192,7 @@ static int specTest1NoDependencies() {
 
     clSetKernelArg(reduceKernel, 0, sizeof(cl_mem), &device_write_to);
 	clSetKernelArg(reduceKernel, 1, sizeof(cl_int) * localWorkSize, NULL);
-	int length = NUM_VALUES;
-	clSetKernelArg(reduceKernel, 2, sizeof(cl_int), &length);
+	clSetKernelArg(reduceKernel, 2, sizeof(cl_int), &NUM_VALUES);
 	clSetKernelArg(reduceKernel, 3, sizeof(cl_mem), &device_reducedWriteTo);
 
 	clStatus = clEnqueueNDRangeKernel(command_queue, reduceKernel, 1, NULL, &globalWorkSize, &localWorkSize, 0, NULL, NULL);
@@ -217,7 +205,7 @@ static int specTest1NoDependencies() {
 		writeToSum += reduced_writeToResult[i];
 	}
 
-	printf("writeToSum = %d\n", writeToSum);
+	//printf("writeToSum = %d\n", writeToSum);
 
 
 	// --------------------------------------------------------------------------------------------------------------
@@ -228,7 +216,7 @@ static int specTest1NoDependencies() {
 
     clSetKernelArg(reduceKernel, 0, sizeof(cl_mem), &device_write_count);
 	clSetKernelArg(reduceKernel, 1, sizeof(cl_int) * localWorkSize, NULL);
-	clSetKernelArg(reduceKernel, 2, sizeof(cl_int), &length);
+	clSetKernelArg(reduceKernel, 2, sizeof(cl_int), &NUM_VALUES);
 	clSetKernelArg(reduceKernel, 3, sizeof(cl_mem), &device_reducedWriteCount);
 
 	clStatus = clEnqueueNDRangeKernel(command_queue, reduceKernel, 1, NULL, &globalWorkSize, &localWorkSize, 0, NULL, NULL);
@@ -242,8 +230,8 @@ static int specTest1NoDependencies() {
 		writeCountSum += reducedWriteCountResult[i];
 	}
 
-	printf("writeCountSum = %d\n", writeCountSum);
-	puts("");
+	//printf("writeCountSum = %d\n", writeCountSum);
+	//puts("");
 
 	if (writeToSum < writeCountSum) {
 		spec = 1;
@@ -265,17 +253,20 @@ static int specTest1NoDependencies() {
 	clFlush(command_queue);
 	clFinish(command_queue);
 
-	printf("misspec  = %d \n" , spec);
+	//printf("misspec  = %d \n" , spec);
 
 
 	gettimeofday(&tv2, NULL);
-	printf("GPU Total time = %f seconds\n",
-			(double) (tv2.tv_usec - tv1.tv_usec) / 1000000
-					+ (double) (tv2.tv_sec - tv1.tv_sec));
+	//printf("GPU Total time = %f seconds\n",
+//			(double) (tv2.tv_usec - tv1.tv_usec) / 1000000
+	//				+ (double) (tv2.tv_sec - tv1.tv_sec));
+
+	*used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
 
 
 	clReleaseContext(context);
 	clReleaseCommandQueue(command_queue);
+
 	clReleaseMemObject(device_A);
 	clReleaseMemObject(device_B);
 	clReleaseMemObject(device_P);
@@ -287,13 +278,64 @@ static int specTest1NoDependencies() {
 	clReleaseMemObject(device_write_count);
 	clReleaseMemObject(device_misspeculation);
 
+	clReleaseKernel(testTlsKernel);
+	clReleaseKernel(DC1kernel);
+	clReleaseKernel(DC3kernel);
+	clReleaseKernel(reduceKernel);
+
 	delete[] reducedWriteCountResult;
 	delete[] reduced_writeToResult;
+	delete[] emptyIntArray;
 
 	return 0;
 }
 
+static void performCompare() {
 
+	init_assign_mem(NUM_VALUES, FUNC_LOOP_NUM);
+
+	initialize();
+
+	double sequential_time;
+	sequentialTest1(&sequential_time);
+
+	memcpy(host_A2, host_A, NUM_VALUES * sizeof(float));
+	memcpy(host_B2, host_B, NUM_VALUES * sizeof(float));
+
+	initialize();
+
+	double parallel_time;
+	specTest1NoDependencies(&parallel_time);
+
+	printf("%d\t%d\t%.0f\t%.0f\t%.2f\n", NUM_VALUES, FUNC_LOOP_NUM, sequential_time, parallel_time, sequential_time / parallel_time);
+
+	bool yes = true;
+	for (int i = 0; i < NUM_VALUES; i++) {
+		if (host_A[i] != host_A2[i]) {
+			yes = false;
+			printf("%d %.2f %.2f\n", i, host_A[i], host_A2[i]);
+			//break;
+		}
+
+		if (host_B[i] != host_B2[i]) {
+			yes = false;
+			printf("%d %.2f %.2f\n", i, host_A[i], host_A2[i]);
+			//break;
+		}
+	}
+
+	if (!yes) {
+		puts("unsuccessful");
+	}
+
+	delete[] host_A;
+	delete[] host_A2;
+	delete[] host_B;
+	delete[] host_B2;
+	delete[] host_P;
+	delete[] host_Q;
+
+}
 
 int main (int argc, const char *argv[]) {
 
@@ -301,38 +343,22 @@ int main (int argc, const char *argv[]) {
 	//printfunc::printExtensions();
 
 
-	puts("input NUM_VALUES");
-	scanf("%d", &NUM_VALUES);
+	//puts("input NUM_VALUES");
+	//scanf("%d", &NUM_VALUES);
 
-	puts("input FUNC_LOOP_NUM");
-	scanf("%d", &FUNC_LOOP_NUM);
+	//puts("input FUNC_LOOP_NUM");
+	//scanf("%d", &FUNC_LOOP_NUM);
 
-	init_assign_mem(NUM_VALUES, FUNC_LOOP_NUM);
+	printf("NUM_VALUES\tFUNC_LOOP\tCPU\tGPU\tSpeedUp\t\n");
 
-	initialize();
-
-	sequentialTest1();
-
-	memcpy(host_A2, host_A, NUM_VALUES * sizeof(float));
-	memcpy(host_B2, host_B, NUM_VALUES * sizeof(float));
-
-
-	specTest1NoDependencies();
-
-	bool yes = true;
-	for (int i = 0; i < NUM_VALUES; i++) {
-		if (host_A[i] != host_A2[i]) {
-			yes = false;
-			break;
-		}
-
-		if (host_B[i] != host_B2[i]) {
-			yes = false;
-			break;
+	for (int nv = 10000; nv <= 1000000; nv *= 10) {
+		for (int funcIter = 10; funcIter <= 1000; funcIter *= 10) {
+			NUM_VALUES = nv;
+			FUNC_LOOP_NUM = funcIter;
+			performCompare();
 		}
 	}
 
-	if (yes) puts("success");
 
 
  	return 0;

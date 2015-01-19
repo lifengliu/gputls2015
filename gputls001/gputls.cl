@@ -20,7 +20,7 @@ float func(int i, int FUNC_LOOP_NUM) {
 	float res = 0.0f;
 
 	for (int p = 1; p <= FUNC_LOOP_NUM; p++) {
-		res += p + i;
+		res += (p + i) % 5;
 	}
 
 	return res;
