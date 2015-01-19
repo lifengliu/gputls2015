@@ -1,12 +1,9 @@
 #include <cstdio>
-
 #include <CL/opencl.h>
-
 #include "gputlsconsts.h"
-
 #include "utils.h"
-
 #include <algorithm>
+#include <sys/time.h>
 
 using std::fill;
 
@@ -17,38 +14,74 @@ typedef struct TraceNode {
 } TraceNode;
 
 
-/*float reduceHost(float array[], int size)
-{
-        float sum = array[0];
-        float c = 0.0f;
-        for (int i = 1; i < array.length; i++)
-        {
-            float y = array[i] - c;
-            float t = sum + y;
-            c = (t - sum) - y;
-            sum = t;
-        }
-        return sum;
-}*/
+int NUM_VALUES;
+int FUNC_LOOP_NUM;
+
+float *host_A, *host_B;
+int *host_P, *host_Q;
+float *host_A2, *host_B2;
 
 
-int main (int argc, const char *argv[]) {
 
-//	printfunc::printPlatformAndDevices();
-//	printfunc::printExtensions();
+static void init_assign_mem(int NUM_VALUES, int FUNC_LOOP_NUM) {
 
-	float *host_A = new float[NUM_VALUES];
-	float *host_B = new float[NUM_VALUES];
-	int *host_P = new int[NUM_VALUES];
-	int *host_Q = new int[NUM_VALUES];
+	host_A = new float[NUM_VALUES];
+	host_B = new float[NUM_VALUES];
+	host_P = new int[NUM_VALUES];
+	host_Q = new int[NUM_VALUES];
+	host_A2 = new float[NUM_VALUES];
+	host_B2 = new float[NUM_VALUES];
 
-    for (int i = 0; i < NUM_VALUES; i++) {
+}
+
+
+static void initialize() {
+
+	for (int i = 0; i < NUM_VALUES; i++) {
         host_A[i] = i;
         host_P[i] = i;
         host_Q[i] = i;
     }
 
-    //host_P[5] = 6;
+}
+
+
+
+static float func(int i) {
+	float res = 0.0f;
+
+	for (int p = 1; p <= FUNC_LOOP_NUM; p++) {
+		res += p + i;
+	}
+
+	return res;
+}
+
+
+
+static int sequentialTest1() {
+
+	struct timeval tv1, tv2;
+	gettimeofday(&tv1, NULL);
+
+	for (int i = 0; i < NUM_VALUES; i++) {
+		host_A[host_P[i]] = func(i);
+
+		host_B[i] = host_A[host_Q[i]];
+	}
+
+
+	gettimeofday(&tv2, NULL);
+	printf("Total time = %f seconds\n",
+			(double) (tv2.tv_usec - tv1.tv_usec) / 1000000
+					+ (double) (tv2.tv_sec - tv1.tv_sec));
+
+
+	return 0;
+}
+
+
+static int specTest1NoDependencies() {
 
 	cl_device_id device = gputls::getOneGPUDevice(1);
 	printfunc::display_device(device);
@@ -115,29 +148,31 @@ int main (int argc, const char *argv[]) {
 	clSetKernelArg(testTlsKernel, 1, sizeof(cl_mem), &device_B);
 	clSetKernelArg(testTlsKernel, 2, sizeof(cl_mem), &device_P);
 	clSetKernelArg(testTlsKernel, 3, sizeof(cl_mem), &device_Q);
-	clSetKernelArg(testTlsKernel, 4, sizeof(cl_mem), &device_read_trace);
-	clSetKernelArg(testTlsKernel, 5, sizeof(cl_mem), &device_write_trace);
+	clSetKernelArg(testTlsKernel, 4, sizeof(cl_int), &NUM_VALUES);
+	clSetKernelArg(testTlsKernel, 5, sizeof(cl_mem), &device_read_trace);
+	clSetKernelArg(testTlsKernel, 6, sizeof(cl_mem), &device_write_trace);
 
 	size_t global_size = NUM_VALUES;
 	size_t local_size = 64;
 
+	struct timeval tv1, tv2;
+	gettimeofday(&tv1, NULL);
+
+
 	clStatus = clEnqueueNDRangeKernel(command_queue, testTlsKernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
-
-	if (clStatus != CL_SUCCESS) {
-		puts("create kernel error");
-
-	}
 
 	clEnqueueReadBuffer(command_queue, device_A, CL_TRUE, 0, NUM_VALUES * sizeof(float), host_A, 0, NULL, NULL);
 
 	clFlush(command_queue);
 	clFinish(command_queue);
 
-	for (int i = 0; i < 5; i ++ ){
+	/*for (int i = 0; i < 5; i ++ ){
 		printf("%.2f\n", host_A[i]);
 	}
 
 	puts("this finishes speculative execution, next we perform dependency checking \n\n\n");
+	 */
+
 
 	// phase 1
 	clSetKernelArg(DC1kernel, 0, sizeof(cl_mem), &device_read_trace);
@@ -151,11 +186,12 @@ int main (int argc, const char *argv[]) {
 	int tmp_output[100];
 	clEnqueueReadBuffer(command_queue, device_write_count, CL_TRUE, 0, 100 * sizeof(int), tmp_output, 0, NULL, NULL);
 
-	for (int i = 0; i < 100; i++) {
+	/*for (int i = 0; i < 100; i++) {
 		printf("%d ", tmp_output[i]);
 	}
 
 	puts("");
+	*/
 
 	//reduction on device_write_to
 
@@ -182,8 +218,6 @@ int main (int argc, const char *argv[]) {
 	}
 
 	printf("writeToSum = %d\n", writeToSum);
-	puts("");
-
 
 
 	// --------------------------------------------------------------------------------------------------------------
@@ -220,6 +254,7 @@ int main (int argc, const char *argv[]) {
 		clSetKernelArg(DC3kernel, 0, sizeof(cl_mem), &device_read_to);
 		clSetKernelArg(DC3kernel, 1, sizeof(cl_mem), &device_write_to);
 		clSetKernelArg(DC3kernel, 2, sizeof(cl_mem), &device_misspeculation);
+		clSetKernelArg(DC3kernel, 3, sizeof(cl_mem), &NUM_VALUES);
 
 		clEnqueueNDRangeKernel(command_queue, DC3kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 
@@ -227,13 +262,17 @@ int main (int argc, const char *argv[]) {
 
 	}
 
+	clFlush(command_queue);
+	clFinish(command_queue);
 
 	printf("misspec  = %d \n" , spec);
 
-	delete[] host_A;
-	delete[] host_B;
-	delete[] host_Q;
-	delete[] host_P;
+
+	gettimeofday(&tv2, NULL);
+	printf("GPU Total time = %f seconds\n",
+			(double) (tv2.tv_usec - tv1.tv_usec) / 1000000
+					+ (double) (tv2.tv_sec - tv1.tv_sec));
+
 
 	clReleaseContext(context);
 	clReleaseCommandQueue(command_queue);
@@ -247,6 +286,54 @@ int main (int argc, const char *argv[]) {
 	clReleaseMemObject(device_write_to);
 	clReleaseMemObject(device_write_count);
 	clReleaseMemObject(device_misspeculation);
+
+	delete[] reducedWriteCountResult;
+	delete[] reduced_writeToResult;
+
+	return 0;
+}
+
+
+
+int main (int argc, const char *argv[]) {
+
+	//printfunc::printPlatformAndDevices();
+	//printfunc::printExtensions();
+
+
+	puts("input NUM_VALUES");
+	scanf("%d", &NUM_VALUES);
+
+	puts("input FUNC_LOOP_NUM");
+	scanf("%d", &FUNC_LOOP_NUM);
+
+	init_assign_mem(NUM_VALUES, FUNC_LOOP_NUM);
+
+	initialize();
+
+	sequentialTest1();
+
+	memcpy(host_A2, host_A, NUM_VALUES * sizeof(float));
+	memcpy(host_B2, host_B, NUM_VALUES * sizeof(float));
+
+
+	specTest1NoDependencies();
+
+	bool yes = true;
+	for (int i = 0; i < NUM_VALUES; i++) {
+		if (host_A[i] != host_A2[i]) {
+			yes = false;
+			break;
+		}
+
+		if (host_B[i] != host_B2[i]) {
+			yes = false;
+			break;
+		}
+	}
+
+	if (yes) puts("success");
+
 
  	return 0;
 }

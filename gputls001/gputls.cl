@@ -6,12 +6,8 @@
 
 
 #define TRACE_SIZE 5
-
 #define READ_TRACE_SIZE 5
-
 #define WRITE_TRACE_SIZE 5
-
-#define NUM_VALUES 1000
 
 typedef struct TraceNode {
     int size;
@@ -19,6 +15,16 @@ typedef struct TraceNode {
     //for the case containing multiple arrays, maybe a code generator is needed.
 } TraceNode;
 
+
+float func(int i, int FUNC_LOOP_NUM) {
+	float res = 0.0f;
+
+	for (int p = 1; p <= FUNC_LOOP_NUM; p++) {
+		res += p + i;
+	}
+
+	return res;
+}
 
 float spec_read(size_t threadId, __global float *base_arr, int index, __global TraceNode *readTrace) {
 	readTrace[threadId].indices[readTrace[threadId].size] = index;
@@ -120,7 +126,8 @@ __kernel void dependency_checking_phase_three
 (
 __global int *readTo,
 __global int *writeTo, 
-__global int *misspeculation
+__global int *misspeculation,
+__const int NUM_VALUES
 )
 {
 	size_t tid = get_global_id(0);
@@ -134,6 +141,7 @@ __global int *misspeculation
     if (tid < NUM_VALUES && (readTo[tid] & writeTo[tid])) {
         *misspeculation = 1;
     }
+    
 }
 
 /*
@@ -157,6 +165,7 @@ __global float *A,
 __global float *B,
 __global int *P,
 __global int *Q,
+__const int FUNC_LOOP_NUM,
 __global TraceNode *readTrace,
 __global TraceNode *writeTrace
 ) 
@@ -170,9 +179,10 @@ __global TraceNode *writeTrace
     
     writeTrace[tid].size = 0;
     
-    B[tid] = spec_read(tid, A, P[tid], readTrace); //100
-    
-    spec_write(tid, A, Q[tid], 100, writeTrace);
+    spec_write(tid, A, P[tid], func(tid, FUNC_LOOP_NUM), writeTrace);
+        
+    B[tid] = spec_read(tid, A, Q[tid], readTrace); 
+
     
 }
 
