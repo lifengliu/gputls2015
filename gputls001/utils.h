@@ -183,6 +183,10 @@ void printPlatformAndDevices() {
 	delete[] plats;
 }
 
+void printKernelInfo(cl_kernel k) {
+	//clGetKernelInfo(k, CL_KERNEL_LOCAL_MEM_SIZE)
+}
+
 void printExtensions() {
 	cl_platform_id *platforms;
 	cl_uint num_platforms;
