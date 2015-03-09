@@ -79,7 +79,7 @@ static int sequentialTest1(double *used_time) {
 }
 
 
-static int specTest1NoDependencies(double *used_time, int dc_on = 1) {
+static int specTest1NoDependencies(double *used_time, int dc_on, unsigned int *effectiveMemGPUCost, unsigned int *memGPUCost) {
 
 	cl_device_id device = gputls::getOneGPUDevice(1);    // 0 is APU; 1 is R9 290X
 	//printfunc::display_device(device);
@@ -114,6 +114,25 @@ static int specTest1NoDependencies(double *used_time, int dc_on = 1) {
 
 	struct timeval tv1, tv2;
 	gettimeofday(&tv1, NULL);
+
+	unsigned int __memoryCostGPU = 0;
+	unsigned int __effectiveMemoryCostGPU = 0;
+
+	__memoryCostGPU += NUM_VALUES * sizeof(float);
+	__memoryCostGPU += NUM_VALUES * sizeof(float);
+	__memoryCostGPU += NUM_VALUES * sizeof(int);
+	__memoryCostGPU += NUM_VALUES * sizeof(int);
+
+	__effectiveMemoryCostGPU = __memoryCostGPU;
+
+	__memoryCostGPU += NUM_VALUES * sizeof(TraceNode);
+	__memoryCostGPU += NUM_VALUES * sizeof(TraceNode);
+	__memoryCostGPU += NUM_VALUES * sizeof(cl_int);
+	__memoryCostGPU += NUM_VALUES * sizeof(cl_int);
+	__memoryCostGPU += NUM_VALUES * sizeof(cl_int) * 3;
+
+	*effectiveMemGPUCost = __effectiveMemoryCostGPU;
+	*memGPUCost = __memoryCostGPU;
 
 	cl_mem device_A = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, NUM_VALUES * sizeof(float), host_A, &clStatus);
 	cl_mem device_B = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, NUM_VALUES * sizeof(float), host_B, &clStatus);
@@ -293,6 +312,7 @@ static int specTest1NoDependencies(double *used_time, int dc_on = 1) {
 	return 0;
 }
 
+
 static void performCompare(int testCount = 5) {
 
 	init_assign_mem(NUM_VALUES, FUNC_LOOP_NUM);
@@ -314,9 +334,10 @@ static void performCompare(int testCount = 5) {
 
 	double par_time_sum = 0;
 
+	unsigned int effMemCost, memCost;
 	for (int cnt = 0; cnt < testCount; cnt ++) {
 		double parallel_time;
-		specTest1NoDependencies(&parallel_time, 1);
+		specTest1NoDependencies(&parallel_time, 1, &effMemCost, &memCost);
 		par_time_sum += parallel_time;
 	}
 
@@ -326,7 +347,7 @@ static void performCompare(int testCount = 5) {
 
 	for (int cnt = 0; cnt < testCount; cnt ++) {
 		double parallel_time_dc_off;
-		specTest1NoDependencies(&parallel_time_dc_off, 0);
+		specTest1NoDependencies(&parallel_time_dc_off, 0, &effMemCost, &memCost);
 		par_time_sum_dc_off += parallel_time_dc_off;
 	}
 
@@ -362,6 +383,20 @@ static void performCompare(int testCount = 5) {
 
 }
 
+static void compare1() {
+	printf("NUM_VALUES\tFUNC_LOOP\tCPU(microsecs)\tGPU(DC on)(microsecs)\tGPU(DC off)(microsecs)\tSpeedUp(DC on)\tSpeedUp(DC off)\n");
+
+	for (int nv = 10000; nv <= 1000000; nv *= 10) {
+		for (int funcIter = 10; funcIter <= 1000; funcIter *= 10) {
+			NUM_VALUES = nv;
+			FUNC_LOOP_NUM = funcIter;
+			performCompare();
+		}
+	}
+
+}
+
+
 int main (int argc, const char *argv[]) {
 
 	//printfunc::printPlatformAndDevices();
@@ -374,17 +409,18 @@ int main (int argc, const char *argv[]) {
 	//puts("input FUNC_LOOP_NUM");
 	//scanf("%d", &FUNC_LOOP_NUM);
 
-	printf("NUM_VALUES\tFUNC_LOOP\tCPU(microsecs)\tGPU(DC on)(microsecs)\tGPU(DC off)(microsecs)\tSpeedUp(DC on)\tSpeedUp(DC off)\n");
+	compare1();
 
-	for (int nv = 10000; nv <= 1000000; nv *= 10) {
-		for (int funcIter = 10; funcIter <= 1000; funcIter *= 10) {
-			NUM_VALUES = nv;
-			FUNC_LOOP_NUM = funcIter;
-			performCompare();
-		}
-	}
+	/*
+	NUM_VALUES = 1000;
+	FUNC_LOOP_NUM = 100;
+	init_assign_mem(NUM_VALUES, FUNC_LOOP_NUM);
 
-
+	double time1;
+	unsigned int effMemCost, memCost;
+	specTest1NoDependencies(&time1, 1, &effMemCost, &memCost);
+	printf("effectiveMemoryCost = %u bytes  memoryCost = %u bytes utilization rate = %.2f \n", effMemCost, memCost, (effMemCost+0.0) / memCost);
+    */
 
  	return 0;
 }
