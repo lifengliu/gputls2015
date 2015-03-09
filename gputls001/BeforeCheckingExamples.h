@@ -14,9 +14,12 @@
 Example 1:
 
 for int i = 1 to 100000 do {
-    a[P[i]] = b[Q[i]] + c[Q[i] * 2];
+    a[P[i]] = b[Q[i]] + c[Q[i]];
     b[T[i]] = f(i);
     d[i] = g(i);
+
+    some_calculation();
+
 }
 
 
@@ -30,9 +33,35 @@ c P Q T d is not shared array
 
 
 class BeforeCheckingExamples {
+
 public:
-	BeforeCheckingExamples();
+	BeforeCheckingExamples(int LOOP_SIZE, int CALC_SIZE);
+
 	virtual ~BeforeCheckingExamples();
+
+	void example1();
+
+	void sequentialExecute();
+
+	void initArrayValues();
+
+	float someCalculation();
+
+private:
+	float *host_a, *host_b, *host_c, *host_d;
+	int *host_P, *host_Q, *host_T;
+	int LOOP_SIZE, CALC_SIZE;
+
+	void assign_host_memory();
+
 };
 
+
+
+
 #endif /* GPUTLS001_BEFORECHECKINGEXAMPLES_H_ */
+
+
+
+
+
