@@ -37,10 +37,61 @@ __const int CALC_SIZE
     size_t tid = get_global_id(0);
     a[P[tid]] = b[Q[tid]] + c[Q[tid]];
     b[T[tid]] = 500;
-    d[tid] = someCalculation(CALC_SIZE);
-    
+    d[tid] = someCalculation(CALC_SIZE);   
 }
 
+
+
+//__kernel void mark    mark P 
+
+__kernel void markwriteP
+(
+__global int *buffer,
+__global int *P,
+__global int *raceFlag
+)
+{
+    size_t tid = get_global_id(0);
+    int writeTimes = atomic_inc(&buffer[P[tid]]);
+    if (writeTimes > 0) {
+    	*raceFlag = 1;
+    }
+}
+
+
+//     mark Q & mark T
+__kernel void markwriteT
+(
+__global int *buffer,
+__global int *T,
+__global int *raceFlag
+)
+{
+    size_t tid = get_global_id(0);
+    int writeTimes = atomic_inc(&buffer[T[tid]]);
+    
+    if (writeTimes > 0) {
+    	*raceFlag = 1;
+    }
+}
+
+
+
+__kernel void markReadQ
+(
+__global int *writeBuffer,
+__global int *Q,
+__global int *raceFlag
+)
+{
+    // the buffer contains write information
+    
+    size_t tid = get_global_id(0);
+    
+    if ( writeBuffer[Q[tid]] > 0) {
+        *raceFlag = 1;
+    }
+}
 
 
 

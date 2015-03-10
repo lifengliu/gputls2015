@@ -9,7 +9,8 @@
 #define GPUTLS001_BEFORECHECKINGEXAMPLES_H_
 
 
-
+#include <CL/opencl.h>
+#include "utils.h"
 /*
 Example 1:
 
@@ -35,7 +36,7 @@ c P Q T d is not shared array
 class BeforeCheckingExamples {
 
 public:
-	BeforeCheckingExamples(int LOOP_SIZE, int CALC_SIZE);
+	BeforeCheckingExamples(int LOOP_SIZE, int CALC_SIZE, cl_device_id device);
 
 	virtual ~BeforeCheckingExamples();
 
@@ -47,13 +48,15 @@ public:
 
 	float someCalculation();
 
+	bool parallelCheck();
+
 private:
 	float *host_a, *host_b, *host_c, *host_d;
 	int *host_P, *host_Q, *host_T;
 	int LOOP_SIZE, CALC_SIZE;
+	cl_device_id use_device;
 
 	void assign_host_memory();
-
 };
 
 

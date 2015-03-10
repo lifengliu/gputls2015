@@ -7,6 +7,10 @@
 
 #include "BeforeCheckingExamples.h"
 #include <cmath>
+#include <CL/opencl.h>
+#include <cstdio>
+
+//#include "utils.h"
 
 /*
 Example 1:
@@ -28,9 +32,10 @@ c P Q T d is not shared array
  */
 
 
-BeforeCheckingExamples::BeforeCheckingExamples(int LOOP_SIZE, int CALC_SIZE) {
+BeforeCheckingExamples::BeforeCheckingExamples(int LOOP_SIZE, int CALC_SIZE, cl_device_id device) {
 	this->LOOP_SIZE = LOOP_SIZE;
 	this->CALC_SIZE = CALC_SIZE;
+	this->use_device = device;
 	assign_host_memory();
 }
 
@@ -99,6 +104,65 @@ void BeforeCheckingExamples::assign_host_memory() {
 
 }
 
+
+
+
+bool BeforeCheckingExamples::parallelCheck() {
+	cl_int clStatus;
+	cl_context context = clCreateContext(NULL, 1, &use_device, NULL, NULL, &clStatus);
+	printf("%d\n", clStatus);
+	cl_command_queue commandQueue = clCreateCommandQueue(context, use_device, 0, &clStatus);
+	printf("%d\n", clStatus);
+
+	int sourceSize;
+	char *clSourceCode = gputls::loadFile("gputls001/beforeChecking.cl", &sourceSize);
+	cl_program program = clCreateProgramWithSource(context, 1, (const char **) &clSourceCode, NULL, &clStatus);
+
+	printf("%d\n", clStatus);
+
+	clStatus = clBuildProgram(program, 1, &use_device, NULL, NULL, NULL);
+
+	if (clStatus != CL_SUCCESS) {
+		printf("clStatus = %d\n", clStatus);
+		puts("build Program Error");
+		size_t len;
+		clGetProgramBuildInfo(program, use_device, CL_PROGRAM_BUILD_LOG, NULL, NULL, &len);
+		char *log = new char[len];
+		clGetProgramBuildInfo(program, use_device, CL_PROGRAM_BUILD_LOG, len, log, NULL);
+		printf("%s\n", log);
+		return false;
+	}
+
+
+	/*cl_device_id device = gputls::getOneGPUDevice(1);    // 0 is APU; 1 is R9 290X
+	//printfunc::display_device(device);
+
+	cl_int clStatus;
+	cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, &clStatus);
+	cl_command_queue command_queue = clCreateCommandQueue(context, device, 0, &clStatus);
+
+	int sourceSize;
+	char *clSourceCode = gputls::loadFile("gputls001/gputls.cl", &sourceSize);
+
+	cl_program program = clCreateProgramWithSource(context, 1, (const char **) &clSourceCode, NULL, &clStatus);
+	clStatus = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+
+	if (clStatus != CL_SUCCESS) {
+		printf("clStatus = %d\n", clStatus);
+		puts("build Program Error");
+		size_t len;
+		clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, NULL, NULL, &len);
+		char *log = new char[len];
+		clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, len, log, NULL);
+		printf("%s\n", log);
+		return -1;
+	}
+*/
+
+
+	return true;
+
+}
 
 
 

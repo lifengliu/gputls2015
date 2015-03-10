@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <sys/time.h>
 
+#include "BeforeCheckingExamples.h"
+
 using std::fill;
 
 typedef struct TraceNode {
@@ -409,7 +411,15 @@ int main (int argc, const char *argv[]) {
 	//puts("input FUNC_LOOP_NUM");
 	//scanf("%d", &FUNC_LOOP_NUM);
 
-	compare1();
+	//compare1();   to test old example
+
+
+	cl_device_id device = gputls::getOneGPUDevice(1);    // 0 is APU; 1 is R9 290X
+	BeforeCheckingExamples bce(500, 500, device);
+	bce.initArrayValues();
+	bce.parallelCheck();
+
+
 
 	/*
 	NUM_VALUES = 1000;
