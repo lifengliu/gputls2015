@@ -34,10 +34,12 @@ __const int LOOP_SIZE,
 __const int CALC_SIZE
 )
 {
+    
     size_t tid = get_global_id(0);
     a[P[tid]] = b[Q[tid]] + c[Q[tid]];
     b[T[tid]] = 500;
     d[tid] = someCalculation(CALC_SIZE);   
+	//b[tid] = 500;
 }
 
 

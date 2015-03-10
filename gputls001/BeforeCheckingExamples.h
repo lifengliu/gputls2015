@@ -44,6 +44,8 @@ public:
 
 	void sequentialExecute();
 
+	void parallelExecute();
+
 	void initArrayValues();
 
 	float someCalculation();
@@ -53,10 +55,31 @@ public:
 private:
 	float *host_a, *host_b, *host_c, *host_d;
 	int *host_P, *host_Q, *host_T;
+	int *host_buffer;
+	int host_raceFlag;
+
 	int LOOP_SIZE, CALC_SIZE;
+
+
 	cl_device_id use_device;
+	cl_context context;
+	cl_command_queue command_queue;
+	cl_program program;
+
+	cl_kernel loopKernel, markwritePKernel, markwriteTKernel, markReadQKernel;
+
+	cl_mem device_a, device_b, device_c, device_d;
+	cl_mem device_P, device_Q, device_T;
+
+	cl_mem device_buffer;
+	cl_mem device_raceFlag;
 
 	void assign_host_memory();
+	void initializeDevices();
+	void assign_device_memory();
+	void destroy_device_memory();
+	void release_other_resources();
+
 };
 
 
