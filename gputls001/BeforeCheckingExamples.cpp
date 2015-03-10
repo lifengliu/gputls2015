@@ -170,7 +170,9 @@ void BeforeCheckingExamples::assign_device_memory() {
 	device_Q = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, LOOP_SIZE * sizeof(int), host_Q, &clStatus);
 	device_T = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, LOOP_SIZE * sizeof(int), host_T, &clStatus);
 
-	device_raceFlag = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(int), &host_raceFlag, &clStatus);
+	host_raceFlag = 0;
+	device_raceFlag = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int), &host_raceFlag, &clStatus);
+	device_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, LOOP_SIZE * sizeof(int), host_buffer, &clStatus);
 }
 
 void BeforeCheckingExamples::destroy_device_memory() {
@@ -184,16 +186,151 @@ void BeforeCheckingExamples::destroy_device_memory() {
 	clReleaseMemObject(device_T);
 
 	clReleaseMemObject(device_raceFlag);
+	clReleaseMemObject(device_buffer);
+}
+
+bool BeforeCheckingExamples::check_write_P() {
+
+	cl_int clStatus = -1;
+	cl_uint p = 0;
+
+	clSetKernelArg(markwritePKernel, p++, sizeof(cl_mem), &device_buffer);
+	clSetKernelArg(markwritePKernel, p++, sizeof(cl_mem), &device_P);
+	clSetKernelArg(markwritePKernel, p++, sizeof(cl_mem), &device_raceFlag);
+
+	size_t global_size = LOOP_SIZE;
+	size_t local_size = 64;
+
+	printf("enqueue kernel %d\n", clStatus);
+
+	clStatus = clEnqueueNDRangeKernel(command_queue, markwritePKernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+
+	printf("enqueue kernel %d\n", clStatus);
+
+	int flag = 0;
+	clStatus = clEnqueueReadBuffer(command_queue, device_raceFlag, CL_TRUE, 0, sizeof(int), &flag, 0, NULL, NULL);
+	clStatus = clEnqueueReadBuffer(command_queue, device_buffer, CL_TRUE, 0, sizeof(int) * LOOP_SIZE, host_buffer, 0, NULL, NULL);
+
+	printf("flag = %d\n", flag);
+
+	for (int i = 0; i < LOOP_SIZE; i++) {
+		printf("%d ", host_buffer[i]);
+	}
+
+	puts("");
+
+	if (flag == 0) {
+		return false;
+	} else {
+		return true;
+	}
 
 }
+
+
+
+bool BeforeCheckingExamples::check_read_Q() {
+	cl_int clStatus = -1;
+	cl_uint p = 0;
+
+	clSetKernelArg(markReadQKernel, p++, sizeof(cl_mem), &device_buffer);
+	clSetKernelArg(markReadQKernel, p++, sizeof(cl_mem), &device_T);
+	clSetKernelArg(markReadQKernel, p++, sizeof(cl_mem), &device_raceFlag);
+
+	size_t global_size = LOOP_SIZE;
+	size_t local_size = 64;
+
+	printf("enqueue kernel %d\n", clStatus);
+
+	clStatus = clEnqueueNDRangeKernel(command_queue, markReadQKernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+
+	printf("enqueue kernel %d\n", clStatus);
+
+	int flag = 0;
+	clStatus = clEnqueueReadBuffer(command_queue, device_raceFlag, CL_TRUE, 0, sizeof(int), &flag, 0, NULL, NULL);
+	clStatus = clEnqueueReadBuffer(command_queue, device_buffer, CL_TRUE, 0, sizeof(int) * LOOP_SIZE, host_buffer, 0, NULL, NULL);
+
+	printf("flag = %d\n", flag);
+
+	for (int i = 0; i < LOOP_SIZE; i++) {
+		printf("%d ", host_buffer[i]);
+	}
+
+	puts("");
+
+	if (flag == 0) {
+		return false;
+	} else {
+		return true;
+	}
+
+
+
+	return false;
+}
+
+bool BeforeCheckingExamples::check_write_T() {
+	cl_int clStatus = -1;
+	cl_uint p = 0;
+
+	clSetKernelArg(markwriteTKernel, p++, sizeof(cl_mem), &device_buffer);
+	clSetKernelArg(markwriteTKernel, p++, sizeof(cl_mem), &device_T);
+	clSetKernelArg(markwriteTKernel, p++, sizeof(cl_mem), &device_raceFlag);
+
+	size_t global_size = LOOP_SIZE;
+	size_t local_size = 64;
+
+	printf("enqueue kernel %d\n", clStatus);
+
+	clStatus = clEnqueueNDRangeKernel(command_queue, markwriteTKernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+
+	printf("enqueue kernel %d\n", clStatus);
+
+	int flag = 0;
+	clStatus = clEnqueueReadBuffer(command_queue, device_raceFlag, CL_TRUE, 0, sizeof(int), &flag, 0, NULL, NULL);
+	clStatus = clEnqueueReadBuffer(command_queue, device_buffer, CL_TRUE, 0, sizeof(int) * LOOP_SIZE, host_buffer, 0, NULL, NULL);
+
+	printf("flag = %d\n", flag);
+
+	for (int i = 0; i < LOOP_SIZE; i++) {
+		printf("%d ", host_buffer[i]);
+	}
+
+	puts("");
+
+	if (flag == 0) {
+		return false;
+	} else {
+		return true;
+	}
+
+}
+
+
 
 bool BeforeCheckingExamples::parallelCheck() {
 	struct timeval tv1, tv2;
 	gettimeofday(&tv1, NULL);
 
+	cl_int clStatus;
+	bool conflict = check_write_P();
+
+	if (!conflict) {
+		// fill Buffer to zero
+		clReleaseMemObject(device_buffer);
+		memset(host_buffer, 0, sizeof(int) * LOOP_SIZE);
+		device_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, LOOP_SIZE * sizeof(int), host_buffer, &clStatus);
+
+		conflict = check_write_T();
+
+		if (!conflict) {
+			conflict = check_read_Q();
+			return conflict != 0;
+		}
+
+	}
 
 	return true;
-
 }
 
 
@@ -212,24 +349,6 @@ void BeforeCheckingExamples::release_other_resources() {
 
 
 void BeforeCheckingExamples::parallelExecute() {
-	/*__kernel void loop_kernel
-	(
-	__global float *a,
-	__global float *b,
-	__global float *c,
-	__global float *d,
-	__global int *Q,
-	__global int *P,
-	__global int *T,
-	__const int LOOP_SIZE,
-	__const int CALC_SIZE
-	)
-	{
-	    size_t tid = get_global_id(0);
-	    a[P[tid]] = b[Q[tid]] + c[Q[tid]];
-	    b[T[tid]] = 500;
-	    d[tid] = someCalculation(CALC_SIZE);
-	}*/
 
 	cl_int clStatus = -1;
 	cl_uint p = 0;

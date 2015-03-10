@@ -415,7 +415,7 @@ int main (int argc, const char *argv[]) {
 
 
 	cl_device_id device = gputls::getOneGPUDevice(1);    // 0 is APU; 1 is R9 290X
-	BeforeCheckingExamples bce(50, 50, device);
+	BeforeCheckingExamples bce(50, 5000, device);
 
 	bce.parallelCheck();
 	bce.parallelExecute();

@@ -80,6 +80,10 @@ private:
 	void destroy_device_memory();
 	void release_other_resources();
 
+	bool check_write_T();
+	bool check_read_Q();
+	bool check_write_P();
+
 };
 
 
