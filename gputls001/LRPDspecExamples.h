@@ -36,15 +36,24 @@ public:
 
 	void parallelExecute();
 
+	bool dependencyChecking();
+
+
+
+
 private:
 	float *host_a, *host_b, *host_c, *host_d; //shared array: a, b, so read and write to a and b need to be speculative
 	int *host_P, *host_Q, *host_T;  // read-only arrays
 
 	int LOOP_SIZE, CALC_SIZE, ARRAY_SIZE;
 
+	int *host_read_to;
+	int *host_write_to;
+	int *host_write_count;
+
 	// since a and b are shared arrays
-	TraceSet *host_read_trace_a, *host_write_trace_a;
-	TraceSet *host_read_trace_b, *host_write_trace_b;
+	TraceSet<5> *host_read_trace_a, *host_write_trace_a;
+	TraceSet<5> *host_read_trace_b, *host_write_trace_b;
 
 
 	//device resources
@@ -53,12 +62,19 @@ private:
 	cl_command_queue command_queue;
 	cl_program program;
 	cl_kernel loopKernel;
+	cl_kernel dc1Kernel, dc2reduceKernel, dc3Kernel;
 
 	//device memories
 	cl_mem device_a, device_b, device_c, device_d;
 	cl_mem device_P, device_Q, device_T;
 	cl_mem device_read_trace_a, device_write_trace_a; //a
 	cl_mem device_read_trace_b, device_write_trace_b; //b
+
+	//for dc
+	cl_mem device_read_to;
+	cl_mem device_write_to;
+	cl_mem device_write_count;
+
 
 
 
@@ -70,6 +86,11 @@ private:
 	void destroy_device_memory();
 	void release_other_resources();
 
+	void dc_phase1(cl_mem &readTrace, cl_mem &writeTrace);
+	bool dc_phase2();
+	bool dc_phase3();
+
+	int dc_reduce(cl_mem &reduced_array, int length);
 
 
 };

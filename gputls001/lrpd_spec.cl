@@ -83,3 +83,82 @@ __const int CALC_SIZE
 
 
 
+
+__kernel void dc_phase1
+(
+__global TraceSet *readTrace, 
+__global TraceSet *writeTrace, 
+__global int *readTo, 
+__global int *writeTo, 
+__global int *writeCount
+)
+{
+#pragma OPENCL EXTENSION cl_amd_printf : enable
+    
+    size_t tid = get_global_id(0);
+    
+    for (int i = 0; i < readTrace[tid].size; i++) {
+        int exist_in_write = 0;
+        for (int j = 0; j < writeTrace[tid].size; j++) {
+            if (readTrace[tid].indices[i] == writeTrace[tid].indices[j]) {
+                exist_in_write = 1;
+                break;
+            }
+        }
+        
+        if (!exist_in_write) {
+            readTo[readTrace[tid].indices[i]] = 1;
+        }
+    }
+    
+    for (int i = 0; i < writeTrace[tid].size; i++) {
+        writeTo[writeTrace[tid].indices[i]] = 1;
+        writeCount[tid]++;
+    }   
+}
+
+
+__kernel void reduce(
+    __global int *buffer,
+    __local int *scratch,
+    __const int length,
+    __global int *result
+)
+{
+    int globalIndex = get_global_id(0);
+    int accumulator = 0;
+
+    // Loop sequentially over chunks of input vector
+    while (globalIndex < length) 
+    {
+        int element = buffer[globalIndex];
+        accumulator += element;
+        globalIndex += get_global_size(0);
+    }
+
+    // Perform parallel reduction
+    int lid = get_local_id(0);
+    scratch[lid] = accumulator;
+    barrier(CLK_LOCAL_MEM_FENCE);
+    
+    for(int offset = get_local_size(0) / 2; offset > 0; offset = offset / 2) {
+        if (lid < offset) 
+        {
+            int other = scratch[lid + offset];
+            int mine = scratch[lid];
+            scratch[lid] = mine + other;
+        }
+        
+        barrier(CLK_LOCAL_MEM_FENCE);
+    }
+    
+    if (lid == 0) {
+        result[get_group_id(0)] = scratch[0];
+    }
+}
+
+
+
+
+
+

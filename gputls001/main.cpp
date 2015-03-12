@@ -428,9 +428,11 @@ int main (int argc, const char *argv[]) {
 	bce.sequentialExecute();
 	 */
 
-	LRPDspecExamples lr(50, 50, 50*2 +2, device);
+	LRPDspecExamples lr(12367, 50, 50000*2, device);
 	//lr.sequentialExecute();
 	lr.parallelExecute();
+	lr.dependencyChecking();
+
 
 	/*
 	NUM_VALUES = 1000;

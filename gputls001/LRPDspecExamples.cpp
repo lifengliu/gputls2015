@@ -64,15 +64,19 @@ void LRPDspecExamples::assign_host_memory() {
 	host_Q = new int[ARRAY_SIZE];
 	host_T = new int[ARRAY_SIZE];
 
-	//TraceSet *host_read_trace_a, *host_write_trace_a;
-	//TraceSet *host_read_trace_b, *host_write_trace_b;
-	host_read_trace_a = new TraceSet[LOOP_SIZE];
-	host_write_trace_a = new TraceSet [LOOP_SIZE];
+	//TraceSet<5> *host_read_trace_a, *host_write_trace_a;
+	//TraceSet<5> *host_read_trace_b, *host_write_trace_b;
+	host_read_trace_a = new TraceSet<5>[LOOP_SIZE];
+	host_write_trace_a = new TraceSet<5> [LOOP_SIZE];
 
-	host_read_trace_b = new TraceSet [LOOP_SIZE];
-	host_write_trace_b = new TraceSet [LOOP_SIZE];
+	host_read_trace_b = new TraceSet<5> [LOOP_SIZE];
+	host_write_trace_b = new TraceSet<5> [LOOP_SIZE];
 
 
+	host_read_to = new int[ARRAY_SIZE];
+	host_write_to = new int[ARRAY_SIZE];
+
+	host_write_count = new int[LOOP_SIZE];
 
 }
 
@@ -92,6 +96,9 @@ void LRPDspecExamples::release_host_memory() {
 	delete[] host_read_trace_b;
 	delete[] host_write_trace_b;
 
+	delete[] host_read_to;
+	delete[] host_write_to;
+	delete[] host_write_count;
 
 }
 
@@ -109,20 +116,33 @@ void LRPDspecExamples::assign_device_memory() {
 	device_T = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, ARRAY_SIZE * sizeof(int), host_T, &clStatus);
 
 	device_read_trace_a = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-			LOOP_SIZE * sizeof(TraceSet),
+			LOOP_SIZE * sizeof(TraceSet<5>),
 			host_read_trace_a, &clStatus);
 
 	device_write_trace_a = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-			LOOP_SIZE * sizeof(TraceSet),
+			LOOP_SIZE * sizeof(TraceSet<5>),
 			host_write_trace_a, &clStatus);
 
 	device_read_trace_b = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-			LOOP_SIZE * sizeof(TraceSet),
+			LOOP_SIZE * sizeof(TraceSet<5>),
 			host_read_trace_b, &clStatus);
 
 	device_write_trace_b = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-			LOOP_SIZE * sizeof(TraceSet),
+			LOOP_SIZE * sizeof(TraceSet<5>),
 			host_write_trace_b, &clStatus);
+
+	device_read_to = clCreateBuffer(context,
+			CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+			ARRAY_SIZE * sizeof(int), host_read_to, &clStatus);
+
+	device_write_to = clCreateBuffer(context,
+			CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+			ARRAY_SIZE * sizeof(int), host_write_to, &clStatus);
+
+	device_write_count = clCreateBuffer(context,
+			CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+			LOOP_SIZE * sizeof(int), host_write_count, &clStatus);
+
 
 	printf("device memory assign %d\n", clStatus);
 
@@ -172,6 +192,8 @@ void LRPDspecExamples::initializeDevices() {
 	}
 
 	loopKernel = clCreateKernel(program, "loop_kernel", &clStatus);
+	dc1Kernel = clCreateKernel(program, "dc_phase1", &clStatus);
+	dc2reduceKernel = clCreateKernel(program, "reduce", &clStatus);
 	printf("loop kernel %d\n", clStatus);
 
 }
@@ -186,10 +208,15 @@ void LRPDspecExamples::initArrayValues() {
 	memset(host_c, 0, sizeof(int) * ARRAY_SIZE);
 	memset(host_d, 0, sizeof(int) * ARRAY_SIZE);
 
-	memset(host_read_trace_a, 0, sizeof(TraceSet) * LOOP_SIZE);
-	memset(host_read_trace_b, 0, sizeof(TraceSet) * LOOP_SIZE);
-	memset(host_write_trace_a, 0, sizeof(TraceSet) * LOOP_SIZE);
-	memset(host_write_trace_b, 0, sizeof(TraceSet) * LOOP_SIZE);
+	memset(host_read_trace_a, 0, sizeof(TraceSet<5>) * LOOP_SIZE);
+	memset(host_read_trace_b, 0, sizeof(TraceSet<5>) * LOOP_SIZE);
+	memset(host_write_trace_a, 0, sizeof(TraceSet<5>) * LOOP_SIZE);
+	memset(host_write_trace_b, 0, sizeof(TraceSet<5>) * LOOP_SIZE);
+
+	memset(host_read_to, 0, sizeof(int) * ARRAY_SIZE);
+	memset(host_write_to, 0, sizeof(int) * ARRAY_SIZE);
+	memset(host_write_count, 0, sizeof(int) * LOOP_SIZE);
+
 
 	for (int i = 0; i < LOOP_SIZE; i++) {
 		host_P[i] = i*2;   // 0 2 4 6 8
@@ -272,9 +299,9 @@ void LRPDspecExamples::parallelExecute() {
 	clFlush(command_queue);
 	clFinish(command_queue);
 
-	for (int i = 0; i < ARRAY_SIZE; i++) {
-		printf("%.2f  ", host_b[i]);
-	}
+	//for (int i = 0; i < ARRAY_SIZE; i++) {
+	//	printf("%.2f  ", host_b[i]);
+	//}
 
 	/*puts("");
 	for (int i = 0; i < ARRAY_SIZE; i++) {
@@ -291,6 +318,104 @@ void LRPDspecExamples::parallelExecute() {
 }
 
 
+
+void LRPDspecExamples::dc_phase1(cl_mem &readTrace, cl_mem &writeTrace) {
+
+	puts("dc1");
+
+	struct timeval tv1, tv2;
+	gettimeofday(&tv1, NULL);
+
+	cl_int clStatus = -1;
+
+	cl_uint p = 0;
+	clSetKernelArg(dc1Kernel, p++, sizeof(cl_mem), &readTrace);
+	clSetKernelArg(dc1Kernel, p++, sizeof(cl_mem), &writeTrace);
+	clSetKernelArg(dc1Kernel, p++, sizeof(cl_mem), &device_read_to);
+	clSetKernelArg(dc1Kernel, p++, sizeof(cl_mem), &device_write_to);
+	clSetKernelArg(dc1Kernel, p++, sizeof(cl_mem), &device_write_count);
+
+
+
+	size_t global_size = LOOP_SIZE;
+	size_t local_size = 64;
+
+	clStatus = clEnqueueNDRangeKernel(command_queue, dc1Kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+	printf("enqueue nd range kernel clStatus = %d\n", clStatus);
+
+	clStatus = clEnqueueReadBuffer(command_queue, device_write_to, CL_TRUE, 0, ARRAY_SIZE * sizeof(int), host_write_to, 0, NULL, NULL);
+
+	printf("read write trace from gpu clStatus = %d\n", clStatus);
+
+	clFlush(command_queue);
+	clFinish(command_queue);
+
+	//for (int i = 0; i < ARRAY_SIZE; i++) {
+	//	printf("%d  ", host_write_to[i]);
+	//}
+
+	//puts("");
+	gettimeofday(&tv2, NULL);
+	double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+
+	printf("dc1 time = %.2f\n", used_time);
+
+}
+
+
+
+bool LRPDspecExamples::dc_phase2() {
+	puts("reduction");
+
+	int array1WriteTo = dc_reduce(device_write_to, ARRAY_SIZE);
+	int array1WriteCount = dc_reduce(device_write_count, LOOP_SIZE);
+
+
+
+	return false;
+}
+
+int LRPDspecExamples::dc_reduce(cl_mem &reduced_array, int length) {
+	cl_int clStatus;
+
+	size_t localWorkSize = 128;
+	size_t numWorkGroups = 64;
+	size_t globalWorkSize = numWorkGroups * localWorkSize;
+
+	cl_mem device_reducedWriteTo = clCreateBuffer(context, CL_MEM_WRITE_ONLY, numWorkGroups * sizeof(int), NULL, &clStatus);
+
+	clSetKernelArg(dc2reduceKernel, 0, sizeof(cl_mem), &reduced_array);
+	clSetKernelArg(dc2reduceKernel, 1, sizeof(cl_int) * localWorkSize, NULL);
+	clSetKernelArg(dc2reduceKernel, 2, sizeof(cl_int), &length);
+	clSetKernelArg(dc2reduceKernel, 3, sizeof(cl_mem), &device_reducedWriteTo);
+
+	clStatus = clEnqueueNDRangeKernel(command_queue, dc2reduceKernel, 1, NULL, &globalWorkSize, &localWorkSize, 0, NULL, NULL);
+
+	int *reduced_writeToResult = new int[numWorkGroups];
+	clEnqueueReadBuffer(command_queue, device_reducedWriteTo, CL_TRUE, 0, sizeof(int) * numWorkGroups, reduced_writeToResult, 0, NULL, NULL);
+
+	int writeToSum = 0;
+	for (size_t i = 0; i < numWorkGroups; i++) {
+		writeToSum += reduced_writeToResult[i];
+		//printf("%d ", reduced_writeToResult[i]);
+	}
+
+	printf("%d\n", writeToSum);
+
+	clReleaseMemObject(device_reducedWriteTo);
+	delete[] reduced_writeToResult;
+
+	return writeToSum;
+}
+
+
+
+bool LRPDspecExamples::dependencyChecking() {
+	//first check a
+	dc_phase1(device_read_trace_a, device_write_trace_a);
+	dc_phase2();
+	return false;
+}
 
 
 
