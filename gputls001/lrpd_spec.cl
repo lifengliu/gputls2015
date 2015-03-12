@@ -12,11 +12,10 @@
 */
 
 
-#define TRACE_SIZE 5
 
 typedef struct TraceSet {
     int size;
-    int indices[TRACE_SIZE];  // record index, not address
+    int indices[5];  // record index, not address
 } TraceSet;
 
 
@@ -54,15 +53,14 @@ __global float *d,
 __global int *Q,
 __global int *P,
 __global int *T,
-__const int LOOP_SIZE,
-__const int CALC_SIZE,
 __global TraceSet *read_trace_a,
 __global TraceSet *write_trace_a,
 __global TraceSet *read_trace_b,
-__global TraceSet *write_trace_b
+__global TraceSet *write_trace_b,
+__const int LOOP_SIZE,
+__const int CALC_SIZE
 )
 {
-    
     size_t tid = get_global_id(0);
     
     read_trace_a[tid].size = 0;

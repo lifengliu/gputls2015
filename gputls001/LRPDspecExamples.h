@@ -30,6 +30,12 @@ public:
 
 	void initArrayValues();
 
+	void sequentialExecute();
+
+	float someCalculation();
+
+	void parallelExecute();
+
 private:
 	float *host_a, *host_b, *host_c, *host_d; //shared array: a, b, so read and write to a and b need to be speculative
 	int *host_P, *host_Q, *host_T;  // read-only arrays
@@ -37,8 +43,8 @@ private:
 	int LOOP_SIZE, CALC_SIZE, ARRAY_SIZE;
 
 	// since a and b are shared arrays
-	TraceSet<5> *host_read_trace_a, *host_write_trace_a;
-	TraceSet<5> *host_read_trace_b, *host_write_trace_b;
+	TraceSet *host_read_trace_a, *host_write_trace_a;
+	TraceSet *host_read_trace_b, *host_write_trace_b;
 
 
 	//device resources
