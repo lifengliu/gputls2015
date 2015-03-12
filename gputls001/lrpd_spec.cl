@@ -157,7 +157,20 @@ __kernel void reduce(
     }
 }
 
-
+__kernel void dc_phase3
+(
+__global int *readTo,
+__global int *writeTo, 
+__global int *misspeculation,
+__const int ARRAY_SIZE
+)
+{
+	size_t tid = get_global_id(0);
+    
+    if (tid < ARRAY_SIZE && (readTo[tid] & writeTo[tid])) {
+        *misspeculation = 1;
+    }
+}
 
 
 

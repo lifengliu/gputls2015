@@ -194,6 +194,8 @@ void LRPDspecExamples::initializeDevices() {
 	loopKernel = clCreateKernel(program, "loop_kernel", &clStatus);
 	dc1Kernel = clCreateKernel(program, "dc_phase1", &clStatus);
 	dc2reduceKernel = clCreateKernel(program, "reduce", &clStatus);
+	dc3Kernel = clCreateKernel(program, "dc_phase3", &clStatus);
+
 	printf("loop kernel %d\n", clStatus);
 
 }
@@ -367,10 +369,12 @@ void LRPDspecExamples::dc_phase1(cl_mem &readTrace, cl_mem &writeTrace) {
 bool LRPDspecExamples::dc_phase2() {
 	puts("reduction");
 
-	int array1WriteTo = dc_reduce(device_write_to, ARRAY_SIZE);
-	int array1WriteCount = dc_reduce(device_write_count, LOOP_SIZE);
+	int writeToSum = dc_reduce(device_write_to, ARRAY_SIZE);
+	int writeCountSum = dc_reduce(device_write_count, LOOP_SIZE);
 
-
+	if (writeToSum < writeCountSum) {
+		return true;
+	}
 
 	return false;
 }
@@ -409,11 +413,74 @@ int LRPDspecExamples::dc_reduce(cl_mem &reduced_array, int length) {
 }
 
 
+bool LRPDspecExamples::dc_phase3() {
+	cl_int clStatus;
+	int spec = 0;
+	cl_mem device_misspeculation = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(int), &spec, &clStatus);
+	clSetKernelArg(dc3Kernel, 0, sizeof(cl_mem), &device_read_to);
+	clSetKernelArg(dc3Kernel, 1, sizeof(cl_mem), &device_write_to);
+	clSetKernelArg(dc3Kernel, 2, sizeof(cl_mem), &device_misspeculation);
+	clSetKernelArg(dc3Kernel, 3, sizeof(cl_mem), &ARRAY_SIZE);
+
+	size_t global_size = LOOP_SIZE;
+	size_t local_size = 64;
+
+	clEnqueueNDRangeKernel(command_queue, dc3Kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+
+	clEnqueueReadBuffer(command_queue, device_misspeculation, CL_TRUE, 0, sizeof(int), &spec, 0, NULL, NULL);
+
+	if (spec == 1) {
+		return true;
+	}
+
+	return false;
+}
+
+void LRPDspecExamples::fillDCArraysTo0() {
+	// readto writeTo writeCount fill to zero
+	cl_int clStatus;
+	clReleaseMemObject(device_read_to);
+	clReleaseMemObject(device_write_to);
+	clReleaseMemObject(device_write_count);
+	memset(host_read_to, 0, sizeof(int) * ARRAY_SIZE);
+	memset(host_write_to, 0, sizeof(int) * ARRAY_SIZE);
+	memset(host_write_count, 0, sizeof(int) * LOOP_SIZE);
+	device_read_to = clCreateBuffer(context,
+			CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(int) * ARRAY_SIZE,
+			host_read_to, &clStatus);
+	device_write_to = clCreateBuffer(context,
+			CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(int) * ARRAY_SIZE,
+			host_write_to, &clStatus);
+	device_write_count = clCreateBuffer(context,
+			CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(int) * LOOP_SIZE,
+			host_write_count, &clStatus);
+}
 
 bool LRPDspecExamples::dependencyChecking() {
 	//first check a
 	dc_phase1(device_read_trace_a, device_write_trace_a);
-	dc_phase2();
+
+	if (dc_phase2()) {
+		return true;
+	}
+
+	if (dc_phase3()) {
+		return true;
+	}
+
+
+	fillDCArraysTo0();
+
+	dc_phase1(device_read_trace_b, device_write_trace_b);
+
+	if (dc_phase2()) {
+		return true;
+	}
+
+	if (dc_phase3()) {
+		return true;
+	}
+
 	return false;
 }
 

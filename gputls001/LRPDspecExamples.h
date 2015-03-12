@@ -91,8 +91,7 @@ private:
 	bool dc_phase3();
 
 	int dc_reduce(cl_mem &reduced_array, int length);
-
-
+	void fillDCArraysTo0();
 };
 
 
