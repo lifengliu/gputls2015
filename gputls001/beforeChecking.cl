@@ -39,7 +39,6 @@ __const int CALC_SIZE
     a[P[tid]] = b[Q[tid]] + c[Q[tid]];
     b[T[tid]] = 500;
     d[tid] = someCalculation(CALC_SIZE);   
-	//b[tid] = 500;
 }
 
 

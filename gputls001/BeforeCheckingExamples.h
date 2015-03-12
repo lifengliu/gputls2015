@@ -36,7 +36,7 @@ c P Q T d is not shared array
 class BeforeCheckingExamples {
 
 public:
-	BeforeCheckingExamples(int LOOP_SIZE, int CALC_SIZE, cl_device_id device);
+	BeforeCheckingExamples(int LOOP_SIZE, int CALC_SIZE, int ARRAY_SIZE, cl_device_id device);
 
 	virtual ~BeforeCheckingExamples();
 
@@ -58,7 +58,7 @@ private:
 	int *host_buffer;
 	int host_raceFlag;
 
-	int LOOP_SIZE, CALC_SIZE;
+	int LOOP_SIZE, CALC_SIZE, ARRAY_SIZE;
 
 
 	cl_device_id use_device;

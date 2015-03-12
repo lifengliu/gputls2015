@@ -6,6 +6,7 @@
 #include <sys/time.h>
 
 #include "BeforeCheckingExamples.h"
+#include "LRPDspecExamples.h"
 
 using std::fill;
 
@@ -415,10 +416,19 @@ int main (int argc, const char *argv[]) {
 
 
 	cl_device_id device = gputls::getOneGPUDevice(1);    // 0 is APU; 1 is R9 290X
-	BeforeCheckingExamples bce(50, 5000, device);
+
+	/*
+
+
+	BeforeCheckingExamples bce(5000, 50, 5000*2+2, device);
 
 	bce.parallelCheck();
 	bce.parallelExecute();
+
+	bce.sequentialExecute();
+	 */
+
+	LRPDspecExamples lr(5000, 50, 5000*2 +2, device);
 
 
 
