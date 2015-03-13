@@ -402,41 +402,87 @@ static void compare1() {
 cl_device_id device = gputls::getOneGPUDevice(1);    // 0 is APU; 1 is R9 290X
 
 
+static double getTimeDouble(timeval &tv1, timeval &tv2) {
+	return (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+}
+
+
+static void testLR1(int loopSize, int calcSize,
+		double &sequentialTime, double &parTime,
+		double &dcTime, double &exeTime,
+		double &speedup
+		) {
+
+	LRPDspecExamples lr(loopSize, calcSize, loopSize * 2, device);
+
+	struct timeval tv1, tv2, tv3, tv4;
+	gettimeofday(&tv1, NULL);
+	lr.parallelExecute();
+	gettimeofday(&tv2, NULL);
+	lr.dependencyChecking();
+	gettimeofday(&tv3, NULL);
+	lr.sequentialExecute();
+	gettimeofday(&tv4, NULL);
+
+	dcTime = getTimeDouble(tv2, tv3);
+	sequentialTime = getTimeDouble(tv3, tv4);
+	exeTime = getTimeDouble(tv1, tv2);
+	parTime = getTimeDouble(tv1, tv3);
+	speedup = sequentialTime / parTime;
+}
+
+
 static void testLRPD() {
 	puts("LRPD");
 
 	int size = 5000;
+	int calc = 128;
 	for (int i = 1;i <= 15;i++) {
-		struct timeval tv1, tv2;
-		gettimeofday(&tv1, NULL);
-
-		int calc = 512 * i;
-		LRPDspecExamples lr(size, calc, size*2, device);
-		lr.parallelExecute();
-		lr.dependencyChecking();
-
-		gettimeofday(&tv2, NULL);
-		double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
-		printf("problem size = %d    %.2f\n", calc, used_time);
+		calc = 128 * i;
+		double seqTime, parTime, dcTime, exeTime, speedup;
+		testLR1(size, calc, seqTime, parTime, dcTime, exeTime, speedup);
+		printf("(%d, %.2f)\n", calc, speedup);
 	}
 
 }
 
+
+
+static void testBC1(int loopSize, int calcSize,
+		double &sequentialTime, double &parTime,
+		double &dcTime, double &exeTime,
+		double &speedup
+		) {
+
+	BeforeCheckingExamples bce(loopSize, calcSize, loopSize * 2, device);
+
+	struct timeval tv1, tv2, tv3, tv4;
+	gettimeofday(&tv1, NULL);
+	bce.parallelCheck();
+	gettimeofday(&tv2, NULL);
+	bce.parallelExecute();
+	gettimeofday(&tv3, NULL);
+	bce.sequentialExecute();
+	gettimeofday(&tv4, NULL);
+
+	dcTime = getTimeDouble(tv1, tv2);
+	sequentialTime = getTimeDouble(tv3, tv4);
+	exeTime = getTimeDouble(tv2, tv3);
+	parTime = getTimeDouble(tv1, tv3);
+	speedup = sequentialTime / parTime;
+}
+
+
 static void testBC() {
 	puts("BC");
 	int size = 5000;
+	int calc = 512;
+	//printf("problemSize\tsequential\tparallel\tdcpart\texecution\tspeedup\n");
 	for (int i = 1;i <= 15;i++) {
-		struct timeval tv1, tv2;
-		gettimeofday(&tv1, NULL);
-
-		int calc = 512 * i;
-		BeforeCheckingExamples bce(size, calc, size*2, device);
-		bce.parallelCheck();
-		bce.parallelExecute();
-
-		gettimeofday(&tv2, NULL);
-		double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
-		printf("problem size = %d    %.2f\n", calc, used_time);
+		int calc = 128 * i;
+		double seqTime, parTime, dcTime, exeTime, speedup;
+		testBC1(size, calc, seqTime, parTime, dcTime, exeTime, speedup);
+		printf("(%d, %.2f)\n", calc, speedup);
 	}
 
 }
@@ -444,8 +490,9 @@ static void testBC() {
 
 int main (int argc, const char *argv[]) {
 
-	testBC();
-	testLRPD();
+		testBC();
+		testLRPD();
+
 	//printfunc::printPlatformAndDevices();
 	//printfunc::printExtensions();
 
