@@ -399,9 +399,53 @@ static void compare1() {
 
 }
 
+cl_device_id device = gputls::getOneGPUDevice(1);    // 0 is APU; 1 is R9 290X
+
+
+static void testLRPD() {
+	puts("LRPD");
+
+	int size = 5000;
+	for (int i = 1;i <= 15;i++) {
+		struct timeval tv1, tv2;
+		gettimeofday(&tv1, NULL);
+
+		int calc = 512 * i;
+		LRPDspecExamples lr(size, calc, size*2, device);
+		lr.parallelExecute();
+		lr.dependencyChecking();
+
+		gettimeofday(&tv2, NULL);
+		double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+		printf("problem size = %d    %.2f\n", calc, used_time);
+	}
+
+}
+
+static void testBC() {
+	puts("BC");
+	int size = 5000;
+	for (int i = 1;i <= 15;i++) {
+		struct timeval tv1, tv2;
+		gettimeofday(&tv1, NULL);
+
+		int calc = 512 * i;
+		BeforeCheckingExamples bce(size, calc, size*2, device);
+		bce.parallelCheck();
+		bce.parallelExecute();
+
+		gettimeofday(&tv2, NULL);
+		double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+		printf("problem size = %d    %.2f\n", calc, used_time);
+	}
+
+}
+
 
 int main (int argc, const char *argv[]) {
 
+	testBC();
+	testLRPD();
 	//printfunc::printPlatformAndDevices();
 	//printfunc::printExtensions();
 
@@ -415,24 +459,19 @@ int main (int argc, const char *argv[]) {
 	//compare1();   to test old example
 
 
-	cl_device_id device = gputls::getOneGPUDevice(1);    // 0 is APU; 1 is R9 290X
 
 	/*
 
 
-	BeforeCheckingExamples bce(5000, 50, 5000*2+2, device);
 
-	bce.parallelCheck();
-	bce.parallelExecute();
 
 	bce.sequentialExecute();
 	 */
 
-	LRPDspecExamples lr(12367, 50, 50000*2, device);
-	//lr.sequentialExecute();
+	/*LRPDspecExamples lr(12367, 50, 50000*2, device);
 	lr.parallelExecute();
 	lr.dependencyChecking();
-
+	 */
 
 	/*
 	NUM_VALUES = 1000;

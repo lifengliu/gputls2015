@@ -15,6 +15,8 @@
 #include <sys/time.h>
 #include "utils.h"
 
+const bool DEBUG = false;
+
 /*
 
 
@@ -143,9 +145,9 @@ void LRPDspecExamples::assign_device_memory() {
 			CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 			LOOP_SIZE * sizeof(int), host_write_count, &clStatus);
 
-
-	printf("device memory assign %d\n", clStatus);
-
+	if (DEBUG) {
+		printf("device memory assign %d\n", clStatus);
+	}
 
 }
 
@@ -169,15 +171,15 @@ void LRPDspecExamples::destroy_device_memory() {
 void LRPDspecExamples::initializeDevices() {
 	cl_int clStatus;
 	context = clCreateContext(NULL, 1, &use_device, NULL, NULL, &clStatus);
-	printf("create context clStatus = %d\n", clStatus);
+	//printf("create context clStatus = %d\n", clStatus);
 	command_queue = clCreateCommandQueue(context, use_device, 0, &clStatus);
-	printf("command queue create %d\n", clStatus);
+	//printf("command queue create %d\n", clStatus);
 
 	int sourceSize;
 	char *clSourceCode = gputls::loadFile("gputls001/lrpd_spec.cl", &sourceSize);
 	program = clCreateProgramWithSource(context, 1, (const char **) &clSourceCode, NULL, &clStatus);
 
-	printf("program %d\n", clStatus);
+	//printf("program %d\n", clStatus);
 
 	clStatus = clBuildProgram(program, 1, &use_device, NULL, NULL, NULL);
 
@@ -196,7 +198,7 @@ void LRPDspecExamples::initializeDevices() {
 	dc2reduceKernel = clCreateKernel(program, "reduce", &clStatus);
 	dc3Kernel = clCreateKernel(program, "dc_phase3", &clStatus);
 
-	printf("loop kernel %d\n", clStatus);
+	//printf("loop kernel %d\n", clStatus);
 
 }
 
@@ -239,8 +241,10 @@ void LRPDspecExamples::release_other_resources() {
 
 
 void LRPDspecExamples::sequentialExecute() {
-	struct timeval tv1, tv2;
-	gettimeofday(&tv1, NULL);
+	//struct timeval tv1, tv2;
+	//gettimeofday(&tv1, NULL);
+
+	initArrayValues();
 
 	for (int i = 1; i < LOOP_SIZE; i++) {
 		host_a[host_P[i]] = host_b[host_Q[i]] + host_c[host_Q[i]];
@@ -248,10 +252,10 @@ void LRPDspecExamples::sequentialExecute() {
 	    host_d[i] = someCalculation();
 	}
 
-	gettimeofday(&tv2, NULL);
-	double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+	//gettimeofday(&tv2, NULL);
+	//double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
 
-	printf("sequential execute use time = %.2f\n", used_time);
+	//printf("sequential execute use time = %.2f\n", used_time);
 }
 
 float LRPDspecExamples::someCalculation() {
@@ -264,9 +268,12 @@ float LRPDspecExamples::someCalculation() {
 
 
 void LRPDspecExamples::parallelExecute() {
-	puts("parallel execute");
-	struct timeval tv1, tv2;
-	gettimeofday(&tv1, NULL);
+	if (DEBUG) {
+		puts("parallel execute");
+	}
+
+	//struct timeval tv1, tv2;
+	//gettimeofday(&tv1, NULL);
 
 	cl_int clStatus = -1;
 
@@ -293,11 +300,17 @@ void LRPDspecExamples::parallelExecute() {
 	size_t local_size = 64;
 
 	clStatus = clEnqueueNDRangeKernel(command_queue, loopKernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
-	printf("enqueue nd range kernel clStatus = %d\n", clStatus);
+	if (DEBUG) {
+		printf("enqueue nd range kernel clStatus = %d\n", clStatus);
+	}
+
 
 	clStatus = clEnqueueReadBuffer(command_queue, device_b, CL_TRUE, 0, ARRAY_SIZE * sizeof(float), host_b, 0, NULL, NULL);
 
-	printf("clReadBuffer clStatus = %d\n", clStatus);
+	if (DEBUG) {
+		printf("clReadBuffer clStatus = %d\n", clStatus);
+	}
+
 	clFlush(command_queue);
 	clFinish(command_queue);
 
@@ -310,10 +323,10 @@ void LRPDspecExamples::parallelExecute() {
 		printf("%d  ", host_T[i]);
 	}*/
 
-	gettimeofday(&tv2, NULL);
-	double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+	//gettimeofday(&tv2, NULL);
+	//double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
 
-	printf("parallel execute time = %.2f\n", used_time);
+	//printf("parallel execute time = %.2f\n", used_time);
 
 
 
@@ -322,11 +335,12 @@ void LRPDspecExamples::parallelExecute() {
 
 
 void LRPDspecExamples::dc_phase1(cl_mem &readTrace, cl_mem &writeTrace) {
+	if (DEBUG) {
+		puts("dc1");
+	}
 
-	puts("dc1");
-
-	struct timeval tv1, tv2;
-	gettimeofday(&tv1, NULL);
+	//struct timeval tv1, tv2;
+	//gettimeofday(&tv1, NULL);
 
 	cl_int clStatus = -1;
 
@@ -343,11 +357,11 @@ void LRPDspecExamples::dc_phase1(cl_mem &readTrace, cl_mem &writeTrace) {
 	size_t local_size = 64;
 
 	clStatus = clEnqueueNDRangeKernel(command_queue, dc1Kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
-	printf("enqueue nd range kernel clStatus = %d\n", clStatus);
+	//printf("enqueue nd range kernel clStatus = %d\n", clStatus);
 
 	clStatus = clEnqueueReadBuffer(command_queue, device_write_to, CL_TRUE, 0, ARRAY_SIZE * sizeof(int), host_write_to, 0, NULL, NULL);
 
-	printf("read write trace from gpu clStatus = %d\n", clStatus);
+	//printf("read write trace from gpu clStatus = %d\n", clStatus);
 
 	clFlush(command_queue);
 	clFinish(command_queue);
@@ -357,17 +371,19 @@ void LRPDspecExamples::dc_phase1(cl_mem &readTrace, cl_mem &writeTrace) {
 	//}
 
 	//puts("");
-	gettimeofday(&tv2, NULL);
-	double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+	//gettimeofday(&tv2, NULL);
+	//double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
 
-	printf("dc1 time = %.2f\n", used_time);
+	//printf("dc1 time = %.2f\n", used_time);
 
 }
 
 
 
 bool LRPDspecExamples::dc_phase2() {
-	puts("reduction");
+	if (DEBUG) {
+		puts("reduction");
+	}
 
 	int writeToSum = dc_reduce(device_write_to, ARRAY_SIZE);
 	int writeCountSum = dc_reduce(device_write_count, LOOP_SIZE);
@@ -404,7 +420,7 @@ int LRPDspecExamples::dc_reduce(cl_mem &reduced_array, int length) {
 		//printf("%d ", reduced_writeToResult[i]);
 	}
 
-	printf("%d\n", writeToSum);
+	//printf("%d\n", writeToSum);
 
 	clReleaseMemObject(device_reducedWriteTo);
 	delete[] reduced_writeToResult;

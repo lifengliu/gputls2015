@@ -33,6 +33,8 @@ c P Q T d is not shared array
  */
 
 
+const bool DEBUG = false;
+
 BeforeCheckingExamples::BeforeCheckingExamples(int LOOP_SIZE, int CALC_SIZE, int ARRAY_SIZE, cl_device_id device) {
 	this->LOOP_SIZE = LOOP_SIZE;
 	this->CALC_SIZE = CALC_SIZE;
@@ -77,8 +79,10 @@ float BeforeCheckingExamples::someCalculation() {
 
 
 void BeforeCheckingExamples::sequentialExecute() {
-	struct timeval tv1, tv2;
-	gettimeofday(&tv1, NULL);
+	//struct timeval tv1, tv2;
+	//gettimeofday(&tv1, NULL);
+
+	initArrayValues();
 
 	for (int i = 1; i < LOOP_SIZE; i++) {
 		host_a[host_P[i]] = host_b[host_Q[i]] + host_c[host_Q[i]];
@@ -86,10 +90,10 @@ void BeforeCheckingExamples::sequentialExecute() {
 	    host_d[i] = someCalculation();
 	}
 
-	gettimeofday(&tv2, NULL);
-	double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+	//gettimeofday(&tv2, NULL);
+	//double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
 
-	printf("sequential execute use time = %.2f\n", used_time);
+	//printf("sequential execute use time = %.2f\n", used_time);
 }
 
 void BeforeCheckingExamples::initArrayValues() {
@@ -130,15 +134,24 @@ void BeforeCheckingExamples::assign_host_memory() {
 void BeforeCheckingExamples::initializeDevices() {
 	cl_int clStatus;
 	context = clCreateContext(NULL, 1, &use_device, NULL, NULL, &clStatus);
-	printf("create context clStatus = %d\n", clStatus);
+
+	if (DEBUG) {
+		printf("create context clStatus = %d\n", clStatus);
+	}
+
 	command_queue = clCreateCommandQueue(context, use_device, 0, &clStatus);
-	printf("%d\n", clStatus);
+
+	if (DEBUG) {
+		printf("%d\n", clStatus);
+	}
 
 	int sourceSize;
 	char *clSourceCode = gputls::loadFile("gputls001/beforeChecking.cl", &sourceSize);
 	program = clCreateProgramWithSource(context, 1, (const char **) &clSourceCode, NULL, &clStatus);
 
-	printf("%d\n", clStatus);
+	if (DEBUG) {
+		printf("%d\n", clStatus);
+	}
 
 	clStatus = clBuildProgram(program, 1, &use_device, NULL, NULL, NULL);
 
@@ -153,16 +166,16 @@ void BeforeCheckingExamples::initializeDevices() {
 	}
 
 	loopKernel = clCreateKernel(program, "loop_kernel", &clStatus);
-	printf("%d\n", clStatus);
+	//printf("%d\n", clStatus);
 
 	markwritePKernel = clCreateKernel(program, "markwriteP", &clStatus);
-	printf("%d\n", clStatus);
+	//printf("%d\n", clStatus);
 
 	markwriteTKernel = clCreateKernel(program, "markwriteT", &clStatus);
-	printf("%d\n", clStatus);
+	//printf("%d\n", clStatus);
 
 	markReadQKernel = clCreateKernel(program, "markReadQ", &clStatus);
-	printf("%d\n", clStatus);
+	//printf("%d\n", clStatus);
 
 
 }
@@ -210,30 +223,27 @@ bool BeforeCheckingExamples::check_write_P() {
 	size_t global_size = LOOP_SIZE;
 	size_t local_size = 64;
 
-	printf("enqueue kernel %d\n", clStatus);
+	//printf("enqueue kernel %d\n", clStatus);
 
 	clStatus = clEnqueueNDRangeKernel(command_queue, markwritePKernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 
-	printf("enqueue kernel %d\n", clStatus);
+	//printf("enqueue kernel %d\n", clStatus);
 
 	int flag = 0;
 	clStatus = clEnqueueReadBuffer(command_queue, device_raceFlag, CL_TRUE, 0, sizeof(int), &flag, 0, NULL, NULL);
-	clStatus = clEnqueueReadBuffer(command_queue, device_buffer, CL_TRUE, 0, sizeof(int) * ARRAY_SIZE, host_buffer, 0, NULL, NULL);
 
-	printf("flag = %d\n", flag);
-
-	for (int i = 0; i < ARRAY_SIZE; i++) {
-		printf("%d ", host_buffer[i]);
+	if (DEBUG) {
+		for (int i = 0; i < ARRAY_SIZE; i++) {
+			printf("%d ", host_buffer[i]);
+		}
+		clStatus = clEnqueueReadBuffer(command_queue, device_buffer, CL_TRUE, 0, sizeof(int) * ARRAY_SIZE, host_buffer, 0, NULL, NULL);
 	}
-
-	puts("");
 
 	if (flag == 0) {
 		return false;
 	} else {
 		return true;
 	}
-
 }
 
 
@@ -249,33 +259,33 @@ bool BeforeCheckingExamples::check_read_Q() {
 	size_t global_size = LOOP_SIZE;
 	size_t local_size = 64;
 
-	printf("enqueue kernel %d\n", clStatus);
-
 	clStatus = clEnqueueNDRangeKernel(command_queue, markReadQKernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 
-	printf("enqueue kernel %d\n", clStatus);
+	if (DEBUG) {
+		printf("enqueue kernel %d\n", clStatus);
+	}
 
 	int flag = 0;
 	clStatus = clEnqueueReadBuffer(command_queue, device_raceFlag, CL_TRUE, 0, sizeof(int), &flag, 0, NULL, NULL);
-	clStatus = clEnqueueReadBuffer(command_queue, device_buffer, CL_TRUE, 0, sizeof(int) * ARRAY_SIZE, host_buffer, 0, NULL, NULL);
 
-	printf("flag = %d\n", flag);
+	if (DEBUG) {
+		printf("flag = %d\n", flag);
 
-	for (int i = 0; i < ARRAY_SIZE; i++) {
-		printf("%d ", host_buffer[i]);
+		clStatus = clEnqueueReadBuffer(command_queue, device_buffer, CL_TRUE, 0, sizeof(int) * ARRAY_SIZE, host_buffer, 0, NULL, NULL);
+
+		for (int i = 0; i < ARRAY_SIZE; i++) {
+			printf("%d ", host_buffer[i]);
+		}
+
+		puts("");
 	}
 
-	puts("");
 
 	if (flag == 0) {
 		return false;
 	} else {
 		return true;
 	}
-
-
-
-	return false;
 }
 
 bool BeforeCheckingExamples::check_write_T() {
@@ -289,23 +299,29 @@ bool BeforeCheckingExamples::check_write_T() {
 	size_t global_size = LOOP_SIZE;
 	size_t local_size = 64;
 
-	printf("enqueue kernel %d\n", clStatus);
+	//printf("enqueue kernel %d\n", clStatus);
 
 	clStatus = clEnqueueNDRangeKernel(command_queue, markwriteTKernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 
-	printf("enqueue kernel %d\n", clStatus);
+	if (DEBUG) {
+		printf("enqueue kernel %d\n", clStatus);
+	}
 
 	int flag = 0;
 	clStatus = clEnqueueReadBuffer(command_queue, device_raceFlag, CL_TRUE, 0, sizeof(int), &flag, 0, NULL, NULL);
-	clStatus = clEnqueueReadBuffer(command_queue, device_buffer, CL_TRUE, 0, sizeof(int) * ARRAY_SIZE, host_buffer, 0, NULL, NULL);
 
-	printf("flag = %d\n", flag);
+	if (DEBUG) {
+		clStatus = clEnqueueReadBuffer(command_queue, device_buffer, CL_TRUE, 0, sizeof(int) * ARRAY_SIZE, host_buffer, 0, NULL, NULL);
 
-	for (int i = 0; i < ARRAY_SIZE; i++) {
-		printf("%d ", host_buffer[i]);
+		printf("flag = %d\n", flag);
+
+		for (int i = 0; i < ARRAY_SIZE; i++) {
+			printf("%d ", host_buffer[i]);
+		}
+
+		puts("");
 	}
 
-	puts("");
 
 	if (flag == 0) {
 		return false;
@@ -318,8 +334,8 @@ bool BeforeCheckingExamples::check_write_T() {
 
 
 bool BeforeCheckingExamples::parallelCheck() {
-	struct timeval tv1, tv2;
-	gettimeofday(&tv1, NULL);
+	//struct timeval tv1, tv2;
+	//gettimeofday(&tv1, NULL);
 
 	cl_int clStatus;
 	bool conflict = check_write_P();
@@ -339,10 +355,10 @@ bool BeforeCheckingExamples::parallelCheck() {
 
 	}
 
-	gettimeofday(&tv2, NULL);
-	double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+	//gettimeofday(&tv2, NULL);
+	//double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
 
-	printf("check used time = %.2f\n", used_time);
+	//printf("check used time = %.2f\n", used_time);
 
 	return conflict != 0;;
 }
@@ -364,9 +380,12 @@ void BeforeCheckingExamples::release_other_resources() {
 
 void BeforeCheckingExamples::parallelExecute() {
 
-	puts("parallel execute");
-	struct timeval tv1, tv2;
-	gettimeofday(&tv1, NULL);
+	if (DEBUG) {
+		puts("parallel execute");
+	}
+
+	//struct timeval tv1, tv2;
+	//gettimeofday(&tv1, NULL);
 
 	cl_int clStatus = -1;
 	cl_uint p = 0;
@@ -406,12 +425,10 @@ void BeforeCheckingExamples::parallelExecute() {
 		printf("%d  ", host_T[i]);
 	}*/
 
-	gettimeofday(&tv2, NULL);
-	double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+	//gettimeofday(&tv2, NULL);
+	//double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
 
-	printf("parallel execute time = %.2f\n", used_time);
-
-
+	//printf("parallel execute time = %.2f\n", used_time);
 
 	//clEnqueueReadBuffer(command_queue, device_A, CL_TRUE, 0, NUM_VALUES * sizeof(float), host_A, 0, NULL, NULL);
 
