@@ -484,15 +484,34 @@ static void testBC() {
 		testBC1(size, calc, seqTime, parTime, dcTime, exeTime, speedup);
 		printf("(%d, %.2f)\n", calc, speedup);
 	}
+}
 
+
+static void barChart() {
+	puts("BC");
+	int size = 100000;
+	int calc = 1024;
+	//printf("problemSize\tsequential\tparallel\tdcpart\texecution\tspeedup\n");
+	for (int i = 1;i <= 10;i++) {
+		size = 4096 * i;
+		double EXE ;
+		double seqTime, parTime, dcTime, exeTime, speedup;
+		testLR1(size, calc, seqTime, parTime, dcTime, exeTime, speedup);
+
+
+		EXE = exeTime;
+
+		printf("(%d, %.2f)\n", i, parTime);
+
+		}
 }
 
 
 int main (int argc, const char *argv[]) {
 
-		testBC();
-		testLRPD();
-
+		//testBC();
+		//testLRPD();
+	barChart();
 	//printfunc::printPlatformAndDevices();
 	//printfunc::printExtensions();
 
