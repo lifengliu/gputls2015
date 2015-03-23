@@ -709,15 +709,209 @@ public interface JavaListener extends ParseTreeListener {
 	 */
 	void exitLocalVariableDeclaration(JavaParser.LocalVariableDeclarationContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JavaParser#statement}.
+	 * Enter a parse tree produced by the {@code blockstat}
+	 * labeled alternative in {@link JavaParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterStatement(JavaParser.StatementContext ctx);
+	void enterBlockstat(JavaParser.BlockstatContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link JavaParser#statement}.
+	 * Exit a parse tree produced by the {@code blockstat}
+	 * labeled alternative in {@link JavaParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitStatement(JavaParser.StatementContext ctx);
+	void exitBlockstat(JavaParser.BlockstatContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code assertationstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterAssertationstat(JavaParser.AssertationstatContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code assertationstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitAssertationstat(JavaParser.AssertationstatContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code ifstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterIfstat(JavaParser.IfstatContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code ifstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitIfstat(JavaParser.IfstatContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code forloop}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterForloop(JavaParser.ForloopContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code forloop}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitForloop(JavaParser.ForloopContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code whileloop}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterWhileloop(JavaParser.WhileloopContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code whileloop}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitWhileloop(JavaParser.WhileloopContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code dowhileloop}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterDowhileloop(JavaParser.DowhileloopContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code dowhileloop}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitDowhileloop(JavaParser.DowhileloopContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code trycatch}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterTrycatch(JavaParser.TrycatchContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code trycatch}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitTrycatch(JavaParser.TrycatchContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code trycatchmulti}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterTrycatchmulti(JavaParser.TrycatchmultiContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code trycatchmulti}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitTrycatchmulti(JavaParser.TrycatchmultiContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code switchstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterSwitchstat(JavaParser.SwitchstatContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code switchstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitSwitchstat(JavaParser.SwitchstatContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code syncstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterSyncstat(JavaParser.SyncstatContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code syncstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitSyncstat(JavaParser.SyncstatContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code returnstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterReturnstat(JavaParser.ReturnstatContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code returnstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitReturnstat(JavaParser.ReturnstatContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code throwstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterThrowstat(JavaParser.ThrowstatContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code throwstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitThrowstat(JavaParser.ThrowstatContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code breakstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterBreakstat(JavaParser.BreakstatContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code breakstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitBreakstat(JavaParser.BreakstatContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code continuestat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterContinuestat(JavaParser.ContinuestatContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code continuestat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitContinuestat(JavaParser.ContinuestatContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code emptystat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterEmptystat(JavaParser.EmptystatContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code emptystat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitEmptystat(JavaParser.EmptystatContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code statexpr}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterStatexpr(JavaParser.StatexprContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code statexpr}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitStatexpr(JavaParser.StatexprContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code switchinner}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterSwitchinner(JavaParser.SwitchinnerContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code switchinner}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitSwitchinner(JavaParser.SwitchinnerContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JavaParser#catchClause}.
 	 * @param ctx the parse tree

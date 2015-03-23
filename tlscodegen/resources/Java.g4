@@ -402,23 +402,23 @@ localVariableDeclaration
     ;
 
 statement
-    :   block
-    |   ASSERT expression (':' expression)? ';'
-    |   'if' parExpression statement ('else' statement)?
-    |   comments 'for' '(' forControl ')' statement
-    |   'while' parExpression statement
-    |   'do' statement 'while' parExpression ';'
-    |   'try' block (catchClause+ finallyBlock? | finallyBlock)
-    |   'try' resourceSpecification block catchClause* finallyBlock?
-    |   'switch' parExpression '{' switchBlockStatementGroup* switchLabel* '}'
-    |   'synchronized' parExpression block
-    |   'return' expression? ';'
-    |   'throw' expression ';'
-    |   'break' Identifier? ';'
-    |   'continue' Identifier? ';'
-    |   ';'
-    |   statementExpression ';'
-    |   Identifier ':' statement
+    :   block                                                   #blockstat
+    |   ASSERT expression (':' expression)? ';'                 #assertationstat
+    |   'if' parExpression statement ('else' statement)?        #ifstat
+    |   comments 'for' '(' forControl ')' statement             #forloop
+    |   'while' parExpression statement                         #whileloop
+    |   'do' statement 'while' parExpression ';'                #dowhileloop
+    |   'try' block (catchClause+ finallyBlock? | finallyBlock) #trycatch
+    |   'try' resourceSpecification block catchClause* finallyBlock?   #trycatchmulti
+    |   'switch' parExpression '{' switchBlockStatementGroup* switchLabel* '}'  #switchstat
+    |   'synchronized' parExpression block    #syncstat
+    |   'return' expression? ';'            #returnstat
+    |   'throw' expression ';'         #throwstat
+    |   'break' Identifier? ';'        #breakstat
+    |   'continue' Identifier? ';'     #continuestat
+    |   ';'                            #emptystat
+    |   statementExpression ';'        #statexpr
+    |   Identifier ':' statement       #switchinner
     ;
 
 catchClause

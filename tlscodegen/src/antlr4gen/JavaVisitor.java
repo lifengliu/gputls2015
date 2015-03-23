@@ -432,11 +432,124 @@ public interface JavaVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitLocalVariableDeclaration(JavaParser.LocalVariableDeclarationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JavaParser#statement}.
+	 * Visit a parse tree produced by the {@code blockstat}
+	 * labeled alternative in {@link JavaParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitStatement(JavaParser.StatementContext ctx);
+	T visitBlockstat(JavaParser.BlockstatContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code assertationstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAssertationstat(JavaParser.AssertationstatContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ifstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIfstat(JavaParser.IfstatContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code forloop}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitForloop(JavaParser.ForloopContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code whileloop}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitWhileloop(JavaParser.WhileloopContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code dowhileloop}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDowhileloop(JavaParser.DowhileloopContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code trycatch}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTrycatch(JavaParser.TrycatchContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code trycatchmulti}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTrycatchmulti(JavaParser.TrycatchmultiContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code switchstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSwitchstat(JavaParser.SwitchstatContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code syncstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSyncstat(JavaParser.SyncstatContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code returnstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitReturnstat(JavaParser.ReturnstatContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code throwstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitThrowstat(JavaParser.ThrowstatContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code breakstat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBreakstat(JavaParser.BreakstatContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code continuestat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitContinuestat(JavaParser.ContinuestatContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code emptystat}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEmptystat(JavaParser.EmptystatContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code statexpr}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatexpr(JavaParser.StatexprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code switchinner}
+	 * labeled alternative in {@link JavaParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSwitchinner(JavaParser.SwitchinnerContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JavaParser#catchClause}.
 	 * @param ctx the parse tree
