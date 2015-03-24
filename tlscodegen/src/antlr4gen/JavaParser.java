@@ -5620,8 +5620,8 @@ public class JavaParser extends Parser {
 		public ForControlContext forControl() {
 			return getRuleContext(ForControlContext.class,0);
 		}
-		public StatementContext statement() {
-			return getRuleContext(StatementContext.class,0);
+		public BlockContext block() {
+			return getRuleContext(BlockContext.class,0);
 		}
 		public ForloopContext(StatementContext ctx) { copyFrom(ctx); }
 		@Override
@@ -5755,7 +5755,7 @@ public class JavaParser extends Parser {
 				setState(844);
 				match(RPAREN);
 				setState(845);
-				statement();
+				block();
 				}
 				break;
 			case 5:
@@ -9022,7 +9022,7 @@ public class JavaParser extends Parser {
 		"\5\u00a8U\2\u0345\u0348\5\u008eH\2\u0346\u0347\7\21\2\2\u0347\u0349\5"+
 		"\u008eH\2\u0348\u0346\3\2\2\2\u0348\u0349\3\2\2\2\u0349\u03a4\3\2\2\2"+
 		"\u034a\u034b\5\u00c6d\2\u034b\u034c\7\27\2\2\u034c\u034d\7;\2\2\u034d"+
-		"\u034e\5\u00a0Q\2\u034e\u034f\7<\2\2\u034f\u0350\5\u008eH\2\u0350\u03a4"+
+		"\u034e\5\u00a0Q\2\u034e\u034f\7<\2\2\u034f\u0350\5\u0086D\2\u0350\u03a4"+
 		"\3\2\2\2\u0351\u0352\7\64\2\2\u0352\u0353\5\u00a8U\2\u0353\u0354\5\u008e"+
 		"H\2\u0354\u03a4\3\2\2\2\u0355\u0356\7\17\2\2\u0356\u0357\5\u008eH\2\u0357"+
 		"\u0358\7\64\2\2\u0358\u0359\5\u00a8U\2\u0359\u035a\7A\2\2\u035a\u03a4"+
