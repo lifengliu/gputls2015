@@ -6,6 +6,7 @@
 #include <sys/time.h>
 
 #include "BeforeCheckingExamples.h"
+#include "BeforeCheckingExample2.h"
 #include "LRPDspecExamples.h"
 
 using std::fill;
@@ -508,10 +509,9 @@ static void barChart() {
 
 
 int main (int argc, const char *argv[]) {
-
 		//testBC();
 		//testLRPD();
-	barChart();
+	//barChart();
 	//printfunc::printPlatformAndDevices();
 	//printfunc::printExtensions();
 
@@ -550,6 +550,8 @@ int main (int argc, const char *argv[]) {
 	printf("effectiveMemoryCost = %u bytes  memoryCost = %u bytes utilization rate = %.2f \n", effMemCost, memCost, (effMemCost+0.0) / memCost);
     */
 
+	BeforeCheckingExample2 bce2(100, 100, 100, device);
+	bce2.evaluateConditions();
  	return 0;
 }
 

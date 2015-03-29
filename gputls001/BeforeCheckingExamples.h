@@ -84,6 +84,8 @@ private:
 	bool check_read_Q();
 	bool check_write_P();
 
+
+
 };
 
 
