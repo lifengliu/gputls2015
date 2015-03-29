@@ -22,6 +22,13 @@ for int i = 1 to 100000 do {
 
 */
 
+
+typedef struct IndexNode {
+    int index;
+    int condVal;
+} IndexNode;
+
+
 float some_calculation(int CALC_SIZE) {
 	float res = 0.5f;
 	
@@ -98,12 +105,13 @@ __const int CALC_SIZE
 __kernel void evaluate_condition_kernel
 (
 __global float *c,
-__global int *condition_val,
+__global IndexNode *ind_cond_val,
 __const int LOOP_SIZE
 )
 {
     int i = get_global_id(0);
-    condition_val[i] = select(0, 1, c[i] > 0);
+    ind_cond_val[i].condVal = select(0, 1, c[i] > 0);
+    ind_cond_val[i].index = i;
 }
 
 

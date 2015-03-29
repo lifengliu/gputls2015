@@ -34,14 +34,9 @@ for int i = 1 to 100000 do {
 
 
 
-/*
 
 
-
-
- */
-
-
+struct IndexNode;
 
 class BeforeCheckingExample2 {
 public:
@@ -51,18 +46,19 @@ public:
 	void parallelExecute();
 	void evaluateConditions();
 	void initArrayValues();
+	void sortBuildIndex();
 
 private:
 	float *host_a, *host_b;
 	float *host_c;
 	int *host_P, *host_Q;
+	int *host_buffer;
 
-	int *host_buffer, *host_condition_val;
+	IndexNode *host_index_node;
 
 	int host_raceFlag;
 
 	int LOOP_SIZE, CALC_SIZE, ARRAY_SIZE;
-
 
 	cl_device_id use_device;
 	cl_context context;
@@ -77,7 +73,8 @@ private:
 
 	cl_mem device_buffer;
 	cl_mem device_raceFlag;
-	cl_mem device_condition_val;
+
+	cl_mem device_index_node;
 
 	void assign_host_memory();
 	void initializeDevices();

@@ -552,6 +552,9 @@ int main (int argc, const char *argv[]) {
 
 	BeforeCheckingExample2 bce2(100, 100, 100, device);
 	bce2.evaluateConditions();
+	bce2.sortBuildIndex();
+
+
  	return 0;
 }
 

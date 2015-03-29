@@ -12,8 +12,19 @@
 #include <cmath>
 #include <sys/time.h>
 #include "utils.h"
+#include <algorithm>
 
 const bool DEBUG = true;
+
+struct IndexNode {
+	int index;
+	int condVal;
+
+	bool operator <(const IndexNode& rhs) {
+         return this->condVal < rhs.condVal || (this->condVal == rhs.condVal && this->index < rhs.index);
+    } 
+};
+
 
 BeforeCheckingExample2::BeforeCheckingExample2(int LOOP_SIZE, int CALC_SIZE, int ARRAY_SIZE, cl_device_id device) {
 	this->LOOP_SIZE = LOOP_SIZE;
@@ -37,7 +48,6 @@ BeforeCheckingExample2::~BeforeCheckingExample2() {
 
 	delete[] host_P;
 	delete[] host_Q;
-	delete[] host_condition_val;
 	delete[] host_buffer;
 
 	destroy_device_memory();
@@ -110,9 +120,12 @@ void BeforeCheckingExample2::assign_host_memory() {
 	host_b = new float[ARRAY_SIZE];
 	host_P = new int[ARRAY_SIZE];
 	host_Q = new int[ARRAY_SIZE];
-	host_c = new float[ARRAY_SIZE];
     host_buffer = new int[ARRAY_SIZE];
-    host_condition_val = new int[LOOP_SIZE];
+
+
+	host_c = new float[LOOP_SIZE];
+    host_index_node = new IndexNode[LOOP_SIZE];
+
 }
 
 
@@ -130,8 +143,8 @@ void BeforeCheckingExample2::assign_device_memory() {
 	host_raceFlag = 0;
 	device_raceFlag = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int), &host_raceFlag, &clStatus);
 	device_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, ARRAY_SIZE * sizeof(int), host_buffer, &clStatus);
-	device_condition_val = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(int) * LOOP_SIZE, host_condition_val, &clStatus);
 
+	device_index_node = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, LOOP_SIZE * sizeof(IndexNode), host_index_node, &clStatus);
 
 }
 
@@ -145,6 +158,8 @@ void BeforeCheckingExample2::destroy_device_memory() {
 	clReleaseMemObject(device_P);
 	clReleaseMemObject(device_Q);
 	
+	clReleaseMemObject(device_index_node);
+
 	clReleaseMemObject(device_raceFlag);
 	clReleaseMemObject(device_buffer);
 }
@@ -217,7 +232,7 @@ void BeforeCheckingExample2::evaluateConditions() {
 	cl_int clStatus ;
 	int p = 0;
 	clSetKernelArg(evalCondKernel, p++, sizeof(cl_mem), &device_c);
-	clSetKernelArg(evalCondKernel, p++, sizeof(cl_mem), &device_condition_val);
+	clSetKernelArg(evalCondKernel, p++, sizeof(cl_mem), &device_index_node);
 	clSetKernelArg(evalCondKernel, p++, sizeof(cl_int), &LOOP_SIZE);
 
 	size_t global_size = LOOP_SIZE;
@@ -229,18 +244,19 @@ void BeforeCheckingExample2::evaluateConditions() {
 		printf("enqueue evalue condition kernel clStatus = %d\n", clStatus);
 	}
 
-	clStatus = clEnqueueReadBuffer(command_queue, device_condition_val, CL_TRUE, 0, LOOP_SIZE * sizeof(int), host_condition_val, 0, NULL, NULL);
+	clStatus = clEnqueueReadBuffer(command_queue, device_index_node, CL_TRUE, 0, LOOP_SIZE * sizeof(IndexNode), host_index_node, 0, NULL, NULL);
 
 	if (DEBUG) {
 		printf("read cond eval clStatus = %d\n", clStatus);
+		for (int i = 0; i < LOOP_SIZE; i++) {
+			printf("%5d", host_index_node[i].condVal);
+			if (i % 8 == 0) {
+				puts("");
+			}
+		}
+
 	}
 
-	for (int i = 0; i < LOOP_SIZE; i++) {
-		printf("%5d", host_condition_val[i]);
-		if (i % 8 == 0) {
-			puts("");
-		}
-	}
 
 	clFlush(command_queue);
 	clFinish(command_queue);
@@ -252,7 +268,7 @@ void BeforeCheckingExample2::initArrayValues() {
 		puts("init array values");
 	}
 
-	memset(host_condition_val, 0, sizeof(int) * LOOP_SIZE);
+	memset(host_index_node, 0, sizeof(IndexNode) * LOOP_SIZE);
 
 	for (int i = 0; i < LOOP_SIZE; i++) {
 		if (i % 8 == 0) {
@@ -264,7 +280,24 @@ void BeforeCheckingExample2::initArrayValues() {
 
 }
 
+void BeforeCheckingExample2::sortBuildIndex() {
+	if (DEBUG) {
+		puts("sort and build Index array");
+	}
 
+	std::sort(host_index_node, host_index_node + LOOP_SIZE);
+
+	if (DEBUG) {
+
+		for (int i = 0; i < LOOP_SIZE; i++) {
+			printf("(%d, %d) ", host_index_node[i].index, host_index_node[i].condVal);
+			if (i % 10 == 0) {
+				puts("");
+			}
+		}
+	}
+
+}
 
 
 
