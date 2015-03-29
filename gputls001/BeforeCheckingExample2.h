@@ -47,6 +47,11 @@ public:
 	void evaluateConditions();
 	void initArrayValues();
 	void sortBuildIndex();
+	bool parallelCheck();
+
+
+	bool checkBranch0();
+	bool checkBranch1();
 
 private:
 	float *host_a, *host_b;
@@ -66,6 +71,7 @@ private:
 	cl_program program;
 
 	cl_kernel loopKernelOrigin, loopKernel0, loopKernel1, evalCondKernel;
+	cl_kernel check_loopkernel_0_writeon_a, check_loopkernel_0_readon_a, check_loopkernel_1_writeon_a;
 
 	cl_mem device_a, device_b;
 	cl_mem device_P, device_Q;
@@ -82,6 +88,7 @@ private:
 	void destroy_device_memory();
 	void release_other_resources();
 
+	void clear_writebuffer();
 
 };
 
