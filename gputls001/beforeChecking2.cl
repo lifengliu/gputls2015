@@ -6,20 +6,13 @@
 
 
 for int i = 1 to 100000 do {
-    
     a[P[i]] = b[Q[i]];
 
-    if (c[i] > 0) { //read 
-
-        a[Q[i]] = b[P[i]] * b[Q[i]];
-    
+    if (c[i] > 0) {
+        a[Q[i]] = b[P[i]] * b[Q[i]] + some_calculation(CALC_SIZE);
     } else {
-        
         b[P[i]] = a[Q[i]];
-    
     }
-
-    a[P[i]] = some_calculation();
 }
 
 
@@ -32,13 +25,20 @@ typedef struct IndexNode {
 } IndexNode;
 
 
-float some_calculation(int CALC_SIZE) {
-	float res = 0.5f;
+float some_calculation(int iteration, int CALC_SIZE) {
+	/*float res = 0.5f;
 	
 	for (int i = 0; i < CALC_SIZE; i++) {
 		res = sin(res);
 	}
+	*/
 	
+	float res = 0.0f;
+
+	for (int p = 1; p <= CALC_SIZE; p++) {
+		res += (p + iteration) % 5;
+	}
+
 	return res;
 }
 
@@ -60,12 +60,11 @@ __const int CALC_SIZE
     a[P[i]] = b[Q[i]];
 
     if (c[i] > 0) {
-        a[Q[i]] = b[P[i]] * b[Q[i]];
+        a[Q[i]] = b[P[i]] * b[Q[i]] + some_calculation(CALC_SIZE, i);
     } else {
         b[P[i]] = a[Q[i]];
     }
 
-    a[P[i]] = some_calculation(CALC_SIZE);
 }
 
 
@@ -88,7 +87,6 @@ __const int CALC_SIZE
     a[P[i]] = b[Q[i]];
 
     b[P[i]] = a[Q[i]];
-    a[P[i]] = some_calculation(CALC_SIZE);
 }
 
 
@@ -105,12 +103,13 @@ __const int CALC_SIZE
 {
 	// if
 
-    int i = index_node[get_global_id(0)].index;
+    int tid = get_global_id(0);
+    //printf("tid = %d\n", tid);
+    int i = index_node[tid].index;
     	
 	a[P[i]] = b[Q[i]];
+	a[Q[i]] = b[P[i]] * b[Q[i]] + some_calculation(CALC_SIZE, i);
 
-    a[Q[i]] = b[P[i]] * b[Q[i]];
-    a[P[i]] = some_calculation(CALC_SIZE);
 }
 
 
@@ -175,7 +174,8 @@ __global IndexNode *ind_cond_val,
 __global int *raceFlag
 ) 
 {
-    int i = ind_cond_val[get_global_id(0)].index;
+    int tid = get_global_id(0);
+    int i = ind_cond_val[tid].index;
 
     int writeTimes = atomic_inc(&buffer[P[i]]);
 
@@ -190,6 +190,7 @@ __global int *raceFlag
     }
 
 }
+
 
 
 

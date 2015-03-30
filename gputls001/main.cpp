@@ -550,11 +550,18 @@ int main (int argc, const char *argv[]) {
 	printf("effectiveMemoryCost = %u bytes  memoryCost = %u bytes utilization rate = %.2f \n", effMemCost, memCost, (effMemCost+0.0) / memCost);
     */
 
-	BeforeCheckingExample2 bce2(100, 100, 320, device);
+	int size = 5000000;
+	BeforeCheckingExample2 bce2(size, 900000, size*3+20, device);
+
 	bce2.evaluateConditions();
+
 	bce2.sortBuildIndex();
+
 	bce2.parallelCheck();
 
+	bce2.parallelExecute();
+
+	bce2.parallelExecuteOrigin();
 
  	return 0;
 }

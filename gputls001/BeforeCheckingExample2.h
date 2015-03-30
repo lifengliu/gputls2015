@@ -44,6 +44,8 @@ public:
 	virtual ~BeforeCheckingExample2();
 
 	void parallelExecute();
+	void parallelExecuteOrigin();
+
 	void evaluateConditions();
 	void initArrayValues();
 	void sortBuildIndex();

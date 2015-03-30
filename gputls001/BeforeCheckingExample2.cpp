@@ -14,7 +14,7 @@
 #include "utils.h"
 #include <algorithm>
 
-const bool DEBUG = true;
+const bool DEBUG = false;
 
 struct IndexNode {
 	int index;
@@ -25,6 +25,8 @@ struct IndexNode {
     } 
 };
 
+
+static size_t num0;
 
 BeforeCheckingExample2::BeforeCheckingExample2(int LOOP_SIZE, int CALC_SIZE, int ARRAY_SIZE, cl_device_id device) {
 	this->LOOP_SIZE = LOOP_SIZE;
@@ -154,9 +156,10 @@ void BeforeCheckingExample2::assign_device_memory() {
 	device_P = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, ARRAY_SIZE * sizeof(int), host_P, &clStatus);
 	device_Q = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, ARRAY_SIZE * sizeof(int), host_Q, &clStatus);
 
-	device_c = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, ARRAY_SIZE * sizeof(int), host_c, &clStatus);
+	device_c = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, LOOP_SIZE * sizeof(int), host_c, &clStatus);
 
 	host_raceFlag = 0;
+
 	device_raceFlag = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int), &host_raceFlag, &clStatus);
 
 	device_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, ARRAY_SIZE * sizeof(int), host_buffer, &clStatus);
@@ -192,52 +195,6 @@ void BeforeCheckingExample2::release_other_resources() {
 	clReleaseKernel(loopKernelOrigin);
 	clReleaseProgram(program);
 }
-
-
-
-
-
-void BeforeCheckingExample2::parallelExecute() {
-	if (DEBUG) {
-		puts("parallel execute");
-	}
-
-	/*cl_int clStatus = -1;
-	cl_uint p = 0;
-
-	clSetKernelArg(loopKernelOrigin, p++, sizeof(cl_mem), &device_a);
-	clSetKernelArg(loopKernelOrigin, p++, sizeof(cl_mem), &device_b);
-
-	clSetKernelArg(loopKernelOrigin, p++, sizeof(cl_mem), &device_Q);
-	clSetKernelArg(loopKernelOrigin, p++, sizeof(cl_mem), &device_P);
-
-	clSetKernelArg(loopKernelOrigin, p++, sizeof(cl_int), &LOOP_SIZE);
-	clSetKernelArg(loopKernelOrigin, p++, sizeof(cl_int), &CALC_SIZE);
-
-	size_t global_size = LOOP_SIZE;
-	size_t local_size = 64;
-
-	clStatus = clEnqueueNDRangeKernel(command_queue, loopKernelOrigin, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
-	
-	if (DEBUG) {
-	    printf("enqueue nd range kernel clStatus = %d\n", clStatus);
-	}
-	
-	clStatus = clEnqueueReadBuffer(command_queue, device_b, CL_TRUE, 0, ARRAY_SIZE * sizeof(float), host_b, 0, NULL, NULL);
-
-	clStatus = clEnqueueReadBuffer(command_queue, device_T, CL_TRUE, 0, ARRAY_SIZE * sizeof(int), host_T, 0, NULL, NULL);
-
-	if (DEBUG) {
-		printf("clReadBuffer clStatus = %d\n", clStatus);
-	}
-
-
-	clFlush(command_queue);
-	clFinish(command_queue);
-	*/
-
-}
-
 
 
 
@@ -286,19 +243,28 @@ void BeforeCheckingExample2::initArrayValues() {
 		puts("init array values");
 	}
 
+	num0 = 0;
+
 	host_raceFlag = 0;
 
 	memset(host_index_node, 0, sizeof(IndexNode) * LOOP_SIZE);
+
 	memset(host_P, 0, sizeof(int) * ARRAY_SIZE);
+
 	memset(host_buffer, 0, sizeof(int) * ARRAY_SIZE);
+
 	memset(host_Q, 0, sizeof(int) * ARRAY_SIZE);
 
+	memset(host_a, 0, sizeof(float) * ARRAY_SIZE);
+
+	memset(host_b, 0, sizeof(float) * ARRAY_SIZE);
 
 	for (int i = 0; i < LOOP_SIZE; i++) {
 		if (i % 32 == 0) {
 			host_c[i] = 1;
 		} else {
 			host_c[i] = 0;
+			num0++;
 		}
 	}
 
@@ -307,7 +273,9 @@ void BeforeCheckingExample2::initArrayValues() {
 		host_Q[i] = i * 3 + 1;
 	}
 
-
+	if (DEBUG) {
+		puts("finish init array values");
+	}
 }
 
 void BeforeCheckingExample2::sortBuildIndex() {
@@ -480,5 +448,88 @@ void BeforeCheckingExample2::clear_writebuffer() {
 }
 
 
+
+void BeforeCheckingExample2::parallelExecute() {
+	//loopKernel0, loopKernel1
+
+	struct timeval tv1, tv2;
+	gettimeofday(&tv1, NULL);
+
+	int clStatus;
+	int p = 0;
+	clSetKernelArg(loopKernel0, p++, sizeof(cl_mem), &device_a );
+	clSetKernelArg(loopKernel0, p++, sizeof(cl_mem), &device_b );
+	clSetKernelArg(loopKernel0, p++, sizeof(cl_mem), &device_Q );
+	clSetKernelArg(loopKernel0, p++, sizeof(cl_mem), &device_P );
+	clSetKernelArg(loopKernel0, p++, sizeof(cl_mem), &device_index_node );
+	clSetKernelArg(loopKernel0, p++, sizeof(cl_int), &LOOP_SIZE );
+	clSetKernelArg(loopKernel0, p++, sizeof(cl_int), &CALC_SIZE );
+
+	p = 0;
+	clSetKernelArg(loopKernel1, p++, sizeof(cl_mem), &device_a );
+	clSetKernelArg(loopKernel1, p++, sizeof(cl_mem), &device_b );
+	clSetKernelArg(loopKernel1, p++, sizeof(cl_mem), &device_Q );
+	clSetKernelArg(loopKernel1, p++, sizeof(cl_mem), &device_P );
+	clSetKernelArg(loopKernel1, p++, sizeof(cl_mem), &device_index_node );
+	clSetKernelArg(loopKernel1, p++, sizeof(cl_int), &LOOP_SIZE );
+	clSetKernelArg(loopKernel1, p++, sizeof(cl_int), &CALC_SIZE );
+
+	size_t global_size0 = num0;
+	size_t local_size = 64;
+
+
+	size_t global_size1 = LOOP_SIZE - num0;
+
+
+	clStatus = clEnqueueNDRangeKernel(command_queue, loopKernel0, 1, NULL, &global_size0, &local_size, 0, NULL, NULL);
+
+	clStatus = clEnqueueNDRangeKernel(command_queue, loopKernel1, 1, &num0, &global_size1, &local_size, 0, NULL, NULL);
+
+	if (DEBUG) {
+		printf("%d\n", clStatus);
+	}
+
+	clFlush(command_queue);
+	clFinish(command_queue);
+
+
+	gettimeofday(&tv2, NULL);
+	double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+
+	printf("time after expand branch = %.2f\n", used_time);
+
+}
+
+
+void BeforeCheckingExample2::parallelExecuteOrigin() {
+	struct timeval tv1, tv2;
+	gettimeofday(&tv1, NULL);
+
+	int p = 0;
+	int clStatus;
+
+	clSetKernelArg(loopKernelOrigin, p++, sizeof(cl_mem), &device_a );
+	clSetKernelArg(loopKernelOrigin, p++, sizeof(cl_mem), &device_b );
+	clSetKernelArg(loopKernelOrigin, p++, sizeof(cl_mem), &device_c );
+	clSetKernelArg(loopKernelOrigin, p++, sizeof(cl_mem), &device_Q );
+	clSetKernelArg(loopKernelOrigin, p++, sizeof(cl_mem), &device_P );
+	clSetKernelArg(loopKernelOrigin, p++, sizeof(cl_int), &LOOP_SIZE );
+	clSetKernelArg(loopKernelOrigin, p++, sizeof(cl_int), &CALC_SIZE );
+
+	size_t global_size0 = LOOP_SIZE;
+	size_t local_size = 64;
+
+	clStatus = clEnqueueNDRangeKernel(command_queue, loopKernelOrigin, 1, NULL, &global_size0, &local_size, 0, NULL, NULL);
+
+	clFlush(command_queue);
+	clFinish(command_queue);
+
+	gettimeofday(&tv2, NULL);
+	double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+
+	printf("time origin = %.2f\n", used_time);
+
+
+}
 
 
