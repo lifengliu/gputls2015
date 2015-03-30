@@ -52,6 +52,7 @@ BeforeCheckingExample2::~BeforeCheckingExample2() {
 	delete[] host_P;
 	delete[] host_Q;
 	delete[] host_buffer;
+	delete[] host_index_node;
 
 	destroy_device_memory();
 
@@ -452,8 +453,9 @@ void BeforeCheckingExample2::clear_writebuffer() {
 void BeforeCheckingExample2::parallelExecute() {
 	//loopKernel0, loopKernel1
 
-	struct timeval tv1, tv2;
+	/*struct timeval tv1, tv2;
 	gettimeofday(&tv1, NULL);
+	*/
 
 	int clStatus;
 	int p = 0;
@@ -493,17 +495,18 @@ void BeforeCheckingExample2::parallelExecute() {
 	clFinish(command_queue);
 
 
-	gettimeofday(&tv2, NULL);
+	/*gettimeofday(&tv2, NULL);
 	double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
 
 	printf("time after expand branch = %.2f\n", used_time);
-
+	*/
 }
 
 
 void BeforeCheckingExample2::parallelExecuteOrigin() {
-	struct timeval tv1, tv2;
+	/*struct timeval tv1, tv2;
 	gettimeofday(&tv1, NULL);
+	*/
 
 	int p = 0;
 	int clStatus;
@@ -524,11 +527,12 @@ void BeforeCheckingExample2::parallelExecuteOrigin() {
 	clFlush(command_queue);
 	clFinish(command_queue);
 
+	/*
 	gettimeofday(&tv2, NULL);
 	double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
 
 	printf("time origin = %.2f\n", used_time);
-
+	*/
 
 }
 

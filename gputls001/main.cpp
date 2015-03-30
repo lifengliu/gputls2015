@@ -4,12 +4,15 @@
 #include "utils.h"
 #include <algorithm>
 #include <sys/time.h>
-
+#include <vector>
 #include "BeforeCheckingExamples.h"
 #include "BeforeCheckingExample2.h"
 #include "LRPDspecExamples.h"
 
 using std::fill;
+using std::vector;
+using std::make_pair;
+using std::pair;
 
 typedef struct TraceNode {
     cl_int size;
@@ -508,6 +511,53 @@ static void barChart() {
 }
 
 
+void testBD() {
+
+	vector<pair<int, double>> bc;
+	vector<pair<int, double>> origin;
+
+	for (int i = 0; i < 10; i++) {
+		int size = 1000 * (i+1);
+		int calc = 50000;
+		BeforeCheckingExample2 bce2(size, calc, size*3+20, device);
+
+		struct timeval tv1, tv2;
+		gettimeofday(&tv1, NULL);
+
+		{
+			bce2.evaluateConditions();
+			bce2.sortBuildIndex();
+			bce2.parallelCheck();
+			bce2.parallelExecute();
+		}
+
+		gettimeofday(&tv2, NULL);
+		double used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+		//printf("time expanded = %.2f\n", used_time);
+		bc.push_back(make_pair(size, used_time));
+
+		gettimeofday(&tv1, NULL);
+		{
+			bce2.parallelExecuteOrigin();
+		}
+
+		gettimeofday(&tv2, NULL);
+		used_time = (double) (tv2.tv_usec - tv1.tv_usec) + (double) (tv2.tv_sec - tv1.tv_sec) * 1000000;
+
+		//printf("time origin = %.2f\n", used_time);
+		origin.push_back(make_pair(size, used_time));
+	}
+
+	for (size_t i = 0; i < bc.size(); i++) {
+		printf("(%d, %.0f)\n", bc[i].first, bc[i].second);
+	}
+
+	for (size_t i = 0; i < origin.size(); i++) {
+		printf("(%d, %.0f)\n", origin[i].first, origin[i].second);
+	}
+
+}
+
 int main (int argc, const char *argv[]) {
 		//testBC();
 		//testLRPD();
@@ -550,18 +600,7 @@ int main (int argc, const char *argv[]) {
 	printf("effectiveMemoryCost = %u bytes  memoryCost = %u bytes utilization rate = %.2f \n", effMemCost, memCost, (effMemCost+0.0) / memCost);
     */
 
-	int size = 5000000;
-	BeforeCheckingExample2 bce2(size, 900000, size*3+20, device);
-
-	bce2.evaluateConditions();
-
-	bce2.sortBuildIndex();
-
-	bce2.parallelCheck();
-
-	bce2.parallelExecute();
-
-	bce2.parallelExecuteOrigin();
+	testBD();
 
  	return 0;
 }
