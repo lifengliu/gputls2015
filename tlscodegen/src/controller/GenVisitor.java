@@ -10,6 +10,7 @@ public class GenVisitor extends JavaBaseVisitor<Object> {
 	int loopLayer = 0;
 	@Override 
 	public Object visitComments(JavaParser.CommentsContext ctx) {
+		System.out.println("visit Comments");
 		String commentText = ctx.getText();
 		
 		if (commentText.trim().startsWith("/*par")) { // 当前节点之后一个节点就是for loop
@@ -21,7 +22,7 @@ public class GenVisitor extends JavaBaseVisitor<Object> {
 	
 	@Override
 	public Object visitForloop(JavaParser.ForloopContext ctx) {
-		
+		System.out.println("visitForLoop");
 		if ((Boolean) visit(ctx.comments())) {
 			loopLayer = 1;
 			visit(ctx.forControl());
@@ -34,7 +35,8 @@ public class GenVisitor extends JavaBaseVisitor<Object> {
 	
 	@Override
 	public Object visitForControl(JavaParser.ForControlContext ctx) {
-		visit(ctx.forInit());
+		System.out.println("visitForControl");
+		//visit(ctx.forInit());
 		String boolExpression = ctx.expression().getText();
 		floop.setBoolExpression(boolExpression);
 		
@@ -46,6 +48,7 @@ public class GenVisitor extends JavaBaseVisitor<Object> {
 	
 	@Override 
 	public Object visitBlock(JavaParser.BlockContext ctx) {
+		System.out.println("visitBlock");
 		if (loopLayer > 0) {
 			System.out.println(ctx.getText());
 		}
