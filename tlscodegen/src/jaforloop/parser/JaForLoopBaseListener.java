@@ -125,6 +125,18 @@ public class JaForLoopBaseListener implements JaForLoopListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterAccessibleVar(JaForLoopParser.AccessibleVarContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitAccessibleVar(JaForLoopParser.AccessibleVarContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterLeftvalue(JaForLoopParser.LeftvalueContext ctx) { }
 	/**
 	 * {@inheritDoc}

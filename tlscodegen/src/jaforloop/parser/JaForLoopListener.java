@@ -99,6 +99,16 @@ public interface JaForLoopListener extends ParseTreeListener {
 	 */
 	void exitPrimary(JaForLoopParser.PrimaryContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link JaForLoopParser#accessibleVar}.
+	 * @param ctx the parse tree
+	 */
+	void enterAccessibleVar(JaForLoopParser.AccessibleVarContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JaForLoopParser#accessibleVar}.
+	 * @param ctx the parse tree
+	 */
+	void exitAccessibleVar(JaForLoopParser.AccessibleVarContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link JaForLoopParser#leftvalue}.
 	 * @param ctx the parse tree
 	 */

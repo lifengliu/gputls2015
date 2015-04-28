@@ -51,9 +51,16 @@ expressionList
 primary
     :   '(' expression ')'
     |   literal
-    |   leftvalue
+    |   accessibleVar
     ;
     
+
+accessibleVar
+    :  Identifier
+    |  accessibleVar '[' expression ']'
+    ;
+
+
 leftvalue
     :   Identifier
     |   leftvalue '[' expression ']'

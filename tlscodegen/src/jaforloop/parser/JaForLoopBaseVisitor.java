@@ -81,6 +81,13 @@ public class JaForLoopBaseVisitor<T> extends AbstractParseTreeVisitor<T> impleme
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitAccessibleVar(JaForLoopParser.AccessibleVarContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitLeftvalue(JaForLoopParser.LeftvalueContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}

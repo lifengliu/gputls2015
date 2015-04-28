@@ -1,3 +1,8 @@
 for (int i=0; i < N; i++) {
     vectorC[i] = vectorA[i] + vectorB[i];
+    x = 5;
+    f();
+    g(1,2,3,4);
+    p[i][j][k+1] = 410;
+    p[A[i]][Q[j]][M] = zz[i][j][k] + zp[j][k][i];
 }

@@ -66,6 +66,12 @@ public interface JaForLoopVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPrimary(JaForLoopParser.PrimaryContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JaForLoopParser#accessibleVar}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAccessibleVar(JaForLoopParser.AccessibleVarContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JaForLoopParser#leftvalue}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
