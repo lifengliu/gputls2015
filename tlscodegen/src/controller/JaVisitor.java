@@ -10,22 +10,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import model.JaBlockContext;
 import model.JaArray;
 
 public class JaVisitor extends JaForLoopBaseVisitor<Object> {
-	
-	Map<String, JaArray> arrayInfo;
-	
-	
-	{
-		arrayInfo = new HashMap<String, JaArray> ();
-	}
+	public JaBlockContext jaBlockContext = new JaBlockContext();
 	
 	private int currentLayer = 0;
 	
 	@Override 
 	public Object visitForloop(JaForLoopParser.ForloopContext ctx) {
-		System.out.println("visit for loop");
+		//System.out.println("visit for loop");
 		//visit(ctx.forControl());
 		currentLayer ++;
 		visit(ctx.block());
@@ -35,7 +30,7 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 	
 	@Override
 	public Object visitBlock(JaForLoopParser.BlockContext ctx) {
-		System.out.println("for block" + ctx.getText());
+		//System.out.println("for block" + ctx.getText());
 		List<StatementContext> statements = ctx.statement();
 		for (StatementContext sCtx : statements) {
 			visit(sCtx);
@@ -46,6 +41,7 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 	@Override
 	public Object visitStatement(JaForLoopParser.StatementContext ctx) {
 		if (ctx.leftvalue() != null) { // an assign statement
+			
 			visit(ctx.leftvalue());
 			visit(ctx.expression());
 			//System.out.println(ctx.expression().getText());
@@ -73,7 +69,6 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 	
 	@Override
 	public Object visitPrimary(JaForLoopParser.PrimaryContext ctx) {
-		ctx.accessibleVar();
 		if (ctx.accessibleVar() != null) {
 			visit(ctx.accessibleVar());
 		} else if (ctx.expression() != null) {
@@ -84,13 +79,12 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 	
 	@Override
 	public Object visitLeftvalue(JaForLoopParser.LeftvalueContext ctx) {
-		//System.out.println("this is a left value");
-		
 		if (ctx.expression() != null) { // it means it is an array
 			
 			JaArray a = getJaArrayFromLeftvalue(ctx);
-			System.out.println(loopUpnCombine(a));
+			jaBlockContext.combine(a);
 			
+			visit(ctx.expression());
 		}
 		
 		return null;
@@ -99,15 +93,13 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 	@Override
 	public Object visitAccessibleVar(JaForLoopParser.AccessibleVarContext ctx) {
 		if (currentLayer > 0) {
-			System.out.println("accessible var   " + ctx.getText());
-
+			//System.out.println("accessible var   " + ctx.getText());
 			if (ctx.expression() != null) { // it is an array
 				JaArray jaArray = getJaArrayFromAccessibleVar(ctx);
-				System.out.println(loopUpnCombine(jaArray));
-				
+				jaBlockContext.combine(jaArray);
+				visit(ctx.expression());
 			}
 		}
-		
 		
 		return null;
 	}
@@ -152,26 +144,7 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 		return jaArray;
 	}
 
-	private JaArray loopUpnCombine(JaArray jaArray) {
-		if (arrayInfo.containsKey(jaArray.identifier)) {
-			JaArray jaOld = arrayInfo.get(jaArray.identifier);
-			if (jaOld.dimension != jaArray.dimension ) {
-				throw new RuntimeException("array " + jaOld.identifier + " dimension is inconsistent");
-			}
-			
-			jaOld.accessType = jaOld.accessType | jaArray.accessType;
-			
-			jaOld.writeExpressions.addAll(jaArray.writeExpressions);
-			jaOld.readExpressions.addAll(jaArray.readExpressions);
-			
-		} // combine
-		else {
-			arrayInfo.put(jaArray.identifier, jaArray);
-		}
-		
-		return arrayInfo.get(jaArray.identifier);
-	}
-	
+
 	private JaArray getJaArrayFromLeftvalue(JaForLoopParser.LeftvalueContext ctx) {
 		JaArray jaArray = new JaArray();
 		

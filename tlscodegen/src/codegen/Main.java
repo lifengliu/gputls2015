@@ -21,6 +21,7 @@ public class Main {
     	ParseTree pt = parser.forloop();
     	JaVisitor visitor = new JaVisitor();
     	visitor.visit(pt);
+    	visitor.jaBlockContext.printAllArrays();
     }
 
 }

@@ -13,7 +13,7 @@ public class JaArray {
 	
 	public int accessType;
 	
-	public List<Map<Integer, String>> writeExpressions = new ArrayList<Map<Integer,String>> ();
+	public List<Map<Integer, String>> writeExpressions = new ArrayList<> ();
 	public List<Map<Integer, String>> readExpressions = new ArrayList<> ();
 	
 	public static final int READ_ONLY = 1, WRITE_ONLY = 2, READ_AND_WRITE = 3;

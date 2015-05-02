@@ -4,5 +4,9 @@ for (int i=0; i < N; i++) {
     f();
     g(1,2,3,4);
     p[i][j][k+1] = 410;
-    p[A[i]][Q[j]][M] = zz[i][j][k] + zp[j][k][i];
+    p[A[i]][Q[j]][M] = zz[i][j][k] + zz[j][k][i];
+    Q[i] = p[A[i]][Q[j]][theta];
+    
+    
+    A1[A2[A3[i]]] = B1[B2[B3[i]]];
 }
