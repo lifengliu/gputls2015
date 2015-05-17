@@ -1,11 +1,24 @@
 package model;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class JaBlockContext {
+	//private 
+	
+	
+	List<JaStatement> statementList; 
+	
 	private Map<String, JaArray> arrayInfo = new TreeMap<String, JaArray> ();
 	
+	
+	/**
+	 * get JaArray corresponding to the identifier, 
+	 * return null when id is not existent
+	 * @param identifier
+	 * @return
+	 */
 	public JaArray getJaArray(String identifier) {
 		return arrayInfo.get(identifier);
 	}
