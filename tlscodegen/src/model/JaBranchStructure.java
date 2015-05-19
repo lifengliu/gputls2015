@@ -2,11 +2,11 @@ package model;
 
 public class JaBranchStructure extends JaStatement {
 	
-	JaBlockContext trueBranch;
+	public JaBlockContext trueBranch;
 	
-	JaBlockContext falseBranch;
+	public JaBlockContext falseBranch;
 	
-	JaExpression cond;
+	public JaExpression cond;
 	
 }
 

@@ -5,6 +5,8 @@ import jaforloop.parser.JaForLoopParser;
 import jaforloop.parser.JaForLoopParser.ExpressionContext;
 import jaforloop.parser.JaForLoopParser.StatementContext;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 
 import model.JaArray;
@@ -13,7 +15,16 @@ import model.JaBranchStructure;
 import codegen.util.JaArrayUtils;
 
 public class JaVisitor extends JaForLoopBaseVisitor<Object> {
-	public JaBlockContext jaBlockContext = new JaBlockContext();
+	private Deque<JaBlockContext> blockContextStack = new ArrayDeque<> ();
+	
+	public JaVisitor(JaBlockContext blockContext) {
+		super();
+		blockContextStack.push(blockContext);
+	}
+	
+	private JaBlockContext getCurrentBlockContext() {
+		return blockContextStack.getFirst();
+	}
 	
 	private int currentLayer = 0;
 	
@@ -39,17 +50,37 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 		if (ctx.leftvalue() != null) { // an assign statement
 			visit(ctx.leftvalue());
 			visit(ctx.expression());
+		} else if (ctx.block() != null && ctx.block().size() > 0) { // if
+			calcFromBranchStructure(ctx);
 		} else if (ctx.expression() != null) { // function call
-		} else if (ctx.block() != null) { // if
-			
-			visit(ctx.expression()); // if condition
-			
-			//visit(ctx.block(0));
-			
-			//visit(ctx.block(1));
+			System.out.println(ctx.expression().getText());
 		}
 		
 		return null;
+	}
+
+	private void calcFromBranchStructure(JaForLoopParser.StatementContext ctx) {
+		visit(ctx.expression()); // if condition
+		//if
+		
+		JaBranchStructure jbs = new JaBranchStructure();
+		JaBlockContext trueBranchContext = new JaBlockContext(getCurrentBlockContext());
+		blockContextStack.push(trueBranchContext);
+		visit(ctx.block(0));
+		blockContextStack.pop();
+		jbs.trueBranch = trueBranchContext;
+		
+		if (ctx.block().size() > 1) { // else
+			JaBlockContext falseBranchContext = new JaBlockContext(getCurrentBlockContext());
+			blockContextStack.push(falseBranchContext);
+			visit(ctx.block(1));
+			blockContextStack.pop();
+			jbs.falseBranch = falseBranchContext;
+		}
+		
+		getCurrentBlockContext().addStatement(jbs);
+		
+		//TODO
 	}
 	
 	@Override 
@@ -80,7 +111,7 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 	public Object visitLeftvalue(JaForLoopParser.LeftvalueContext ctx) {
 		if (ctx.expression() != null) { // it means it is an array
 			JaArray a = JaArrayUtils.getJaArrayFromLeftvalue(ctx);
-			jaBlockContext.combine(a);
+			getCurrentBlockContext().combine(a);
 			visit(ctx.expression());
 		}
 		
@@ -92,7 +123,7 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 		if (currentLayer > 0) {
 			if (ctx.expression() != null) { // it is an array
 				JaArray jaArray = JaArrayUtils.getJaArrayFromAccessibleVar(ctx);
-				jaBlockContext.combine(jaArray);
+				getCurrentBlockContext().combine(jaArray);
 				visit(ctx.expression());
 			}
 		}

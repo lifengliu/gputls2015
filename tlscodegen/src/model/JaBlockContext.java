@@ -1,17 +1,29 @@
 package model;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class JaBlockContext {
-	//private 
 	
+	public JaBlockContext(JaBlockContext parent) {
+		this.parent = parent;
+	}
 	
-	List<JaStatement> statementList; 
+	JaBlockContext parent = null;
+	
+	public List<JaStatement> statementList = new ArrayList<JaStatement> ();
 	
 	private Map<String, JaArray> arrayInfo = new TreeMap<String, JaArray> ();
 	
+	public void addStatement(JaStatement stat) {
+		if (stat == null) {
+			return;
+		}
+		
+		statementList.add(stat);
+	}
 	
 	/**
 	 * get JaArray corresponding to the identifier, 
