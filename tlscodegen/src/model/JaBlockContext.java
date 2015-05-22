@@ -21,7 +21,7 @@ public class JaBlockContext {
 		if (stat == null) {
 			return;
 		}
-		
+		stat.setBlockId(statementList.size()+1);
 		statementList.add(stat);
 	}
 	

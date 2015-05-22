@@ -10,8 +10,11 @@ import java.util.Deque;
 import java.util.List;
 
 import model.JaArray;
+import model.JaAssignStatement;
 import model.JaBlockContext;
 import model.JaBranchStructure;
+import model.JaFunctionCall;
+import model.JaStatement;
 import codegen.util.JaArrayUtils;
 
 public class JaVisitor extends JaForLoopBaseVisitor<Object> {
@@ -27,6 +30,7 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 	}
 	
 	private int currentLayer = 0;
+	private int globalStatementId = 0;
 	
 	@Override 
 	public Object visitForloop(JaForLoopParser.ForloopContext ctx) {
@@ -47,23 +51,35 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 	
 	@Override
 	public Object visitStatement(JaForLoopParser.StatementContext ctx) {
+		globalStatementId++;
+		
 		if (ctx.leftvalue() != null) { // an assign statement
+			
+			JaStatement stat = new JaAssignStatement();
+			stat.setId(globalStatementId);
+			stat.setStatement(ctx.getText());
+			getCurrentBlockContext().addStatement(stat);
+			
 			visit(ctx.leftvalue());
 			visit(ctx.expression());
 		} else if (ctx.block() != null && ctx.block().size() > 0) { // if
-			calcFromBranchStructure(ctx);
+			JaBranchStructure branchStructureStat = new JaBranchStructure();
+			branchStructureStat.setId(globalStatementId);
+			branchStructureStat.setStatement(ctx.getText());
+			calcFromBranchStructure(ctx, branchStructureStat);
 		} else if (ctx.expression() != null) { // function call
-			System.out.println(ctx.expression().getText());
+			JaStatement stat = new JaFunctionCall();
+			stat.setId(globalStatementId);
+			stat.setStatement(ctx.expression().getText());
+			getCurrentBlockContext().addStatement(stat);
 		}
 		
 		return null;
 	}
 
-	private void calcFromBranchStructure(JaForLoopParser.StatementContext ctx) {
+	private void calcFromBranchStructure(JaForLoopParser.StatementContext ctx, JaBranchStructure jbs) {
 		visit(ctx.expression()); // if condition
-		//if
-		
-		JaBranchStructure jbs = new JaBranchStructure();
+
 		JaBlockContext trueBranchContext = new JaBlockContext(getCurrentBlockContext());
 		blockContextStack.push(trueBranchContext);
 		visit(ctx.block(0));
@@ -80,7 +96,6 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 		
 		getCurrentBlockContext().addStatement(jbs);
 		
-		//TODO
 	}
 	
 	@Override 
