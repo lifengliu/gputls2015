@@ -13,6 +13,7 @@ public class JaArray {
 	
 	public int accessType;
 	
+	//key : dimension; value : expression; 
 	public List<Map<Integer, String>> writeExpressions = new ArrayList<> ();
 	public List<Map<Integer, String>> readExpressions = new ArrayList<> ();
 	

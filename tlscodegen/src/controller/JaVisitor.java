@@ -54,7 +54,6 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 		globalStatementId++;
 		
 		if (ctx.leftvalue() != null) { // an assign statement
-			
 			JaStatement stat = new JaAssignStatement();
 			stat.setId(globalStatementId);
 			stat.setStatement(ctx.getText());
@@ -126,7 +125,7 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 	public Object visitLeftvalue(JaForLoopParser.LeftvalueContext ctx) {
 		if (ctx.expression() != null) { // it means it is an array
 			JaArray a = JaArrayUtils.getJaArrayFromLeftvalue(ctx);
-			getCurrentBlockContext().combine(a);
+			getCurrentBlockContext().combineIn(a);
 			visit(ctx.expression());
 		}
 		
@@ -138,7 +137,7 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 		if (currentLayer > 0) {
 			if (ctx.expression() != null) { // it is an array
 				JaArray jaArray = JaArrayUtils.getJaArrayFromAccessibleVar(ctx);
-				getCurrentBlockContext().combine(jaArray);
+				getCurrentBlockContext().combineIn(jaArray);
 				visit(ctx.expression());
 			}
 		}

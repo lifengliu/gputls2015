@@ -1,6 +1,7 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -35,13 +36,17 @@ public class JaBlockContext {
 		return arrayInfo.get(identifier);
 	}
 	
+	public Map<String, JaArray> getArrayInfoMap() {
+		return Collections.unmodifiableMap(arrayInfo);
+	}
+	
 	/**
 	 * put the jaArray netly generated to existed one
 	 * or create a new one into arrayInfo
 	 * @param jaArray
 	 * @return
 	 */
-	public JaArray combine(JaArray jaArray) {
+	public JaArray combineIn(JaArray jaArray) {
 		if (arrayInfo.containsKey(jaArray.identifier)) { //combine
 			JaArray jaOld = arrayInfo.get(jaArray.identifier);
 			if (jaOld.dimension != jaArray.dimension ) {
