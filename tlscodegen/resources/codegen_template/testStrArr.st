@@ -1,0 +1,1 @@
+testStrArr(v, cont) ::= "String <v>[] = { <cont; wrap, anchor, separator=\" , \"> };"
