@@ -5,6 +5,7 @@ import java.util.Map;
 import model.JaArray;
 import model.JaBlockContext;
 import model.JaBranchStructure;
+import model.JaForLoop;
 import model.JaStatement;
 
 public class SimpleReadnWriteAnalyzer {
@@ -21,6 +22,8 @@ public class SimpleReadnWriteAnalyzer {
 				JaBranchStructure jbs = (JaBranchStructure) js;
 				traverseBlocks(jbs.trueBranch);
 				traverseBlocks(jbs.falseBranch);
+			} else if (js instanceof JaForLoop) {
+				traverseBlocks(((JaForLoop) js).getBlockContext());
 			}
 		}
 	}

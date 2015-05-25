@@ -5,6 +5,7 @@ import jaforloop.parser.JaForLoopParser;
 import model.JaAssignStatement;
 import model.JaBlockContext;
 import model.JaBranchStructure;
+import model.JaForLoop;
 import model.JaFunctionCall;
 import model.JaStatement;
 
@@ -24,7 +25,8 @@ public class JaBlockTest {
     	ParseTree pt = parser.forloop();
     	
     	JaBlockContext ctx = new JaBlockContext(null); //root
-    	JaVisitor visitor = new JaVisitor(ctx);
+    	
+    	JaVisitor visitor = new JaVisitor();
     	visitor.visit(pt);
     	
     	ctx.printAllArrays();
@@ -62,11 +64,12 @@ public class JaBlockTest {
     	JaForLoopParser parser = new JaForLoopParser(tokens);
     	ParseTree pt = parser.forloop();
     	
-    	JaBlockContext ctx = new JaBlockContext(null); //root
-    	JaVisitor visitor = new JaVisitor(ctx);
+    	JaVisitor visitor = new JaVisitor();
     	visitor.visit(pt);
+    	JaForLoop fl = visitor.getRootForLoop();
     	
-    	traverseStatementInBlock(ctx);
+    	traverseStatementInBlock(fl.getBlockContext());
+    	
 	}
 	
 	

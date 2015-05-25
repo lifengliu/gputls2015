@@ -6,7 +6,7 @@ import jaforloop.parser.JaForLoopParser;
 import java.util.Map;
 
 import model.JaArray;
-import model.JaBlockContext;
+import model.JaForLoop;
 
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -20,23 +20,26 @@ public class SimpleReadnWriteAnalyzerTest {
 
 	@Test
 	public void simpleRnWTest1() throws Exception {
+		System.out.println("simpleRnWTest1() \n\n");
 		JaForLoopLexer lexer = new JaForLoopLexer(new ANTLRFileStream("resources/code_example/1.forloop"));
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		JaForLoopParser parser = new JaForLoopParser(tokens);
 		ParseTree pt = parser.forloop();
 
-		JaBlockContext ctx = new JaBlockContext(null); // root
-		JaVisitor visitor = new JaVisitor(ctx);
+		JaVisitor visitor = new JaVisitor();
 		visitor.visit(pt);
 
+		JaForLoop fl = visitor.getRootForLoop();
 		SimpleReadnWriteAnalyzer ana = new SimpleReadnWriteAnalyzer();
 
-		Map<String, JaArray> arrayInfoMap = ana.getArrayInfos(ctx);
+		
+		Map<String, JaArray> arrayInfoMap = ana.getArrayInfos(fl.getBlockContext());
 
 		for (Map.Entry<String, JaArray> e : arrayInfoMap.entrySet()) {
 			System.out.println(e.getValue());
 		}
 
+		System.out.println("\n\n finish simpleRnWTest1() \n\n");
 	}
 
 	@Test
@@ -46,13 +49,14 @@ public class SimpleReadnWriteAnalyzerTest {
 		JaForLoopParser parser = new JaForLoopParser(tokens);
 		ParseTree pt = parser.forloop();
 
-		JaBlockContext ctx = new JaBlockContext(null); // root
-		JaVisitor visitor = new JaVisitor(ctx);
+		JaVisitor visitor = new JaVisitor();
 		visitor.visit(pt);
+		
+		JaForLoop rootForLoop = visitor.getRootForLoop();
 
 		SimpleReadnWriteAnalyzer ana = new SimpleReadnWriteAnalyzer();
 
-		Map<String, JaArray> arrayInfoMap = ana.getArrayInfos(ctx);
+		Map<String, JaArray> arrayInfoMap = ana.getArrayInfos(rootForLoop.getBlockContext());
 
 		for (Map.Entry<String, JaArray> e : arrayInfoMap.entrySet()) {
 			System.out.println(e.getValue());
@@ -60,6 +64,6 @@ public class SimpleReadnWriteAnalyzerTest {
 
 	}
 
-
+	 
 
 }

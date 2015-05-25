@@ -24,6 +24,7 @@ statement
     : 'if' '(' expression ')' block ('else' block)?
     | leftvalue '=' expression ';'
     | expression ';'
+    | forloop
     ;
 
 expression

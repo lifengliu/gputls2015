@@ -2,17 +2,25 @@ package model;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 public class JaBlockContext {
+	
+	//private Set<String> iterationDomainVariables = new HashSet<String> (); // interation domain of a block
 	
 	public JaBlockContext(JaBlockContext parent) {
 		this.parent = parent;
 	}
 	
-	JaBlockContext parent = null;
+	/*public void setCurrentIterationDomain(String blockIterDomVar) {
+		iterationDomainVariables.add(blockIterDomVar);
+	}*/
+	
+	public JaBlockContext parent = null;
 	
 	public List<JaStatement> statementList = new ArrayList<JaStatement> ();
 	

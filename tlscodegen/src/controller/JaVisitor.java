@@ -13,30 +13,65 @@ import model.JaArray;
 import model.JaAssignStatement;
 import model.JaBlockContext;
 import model.JaBranchStructure;
+import model.JaForLoop;
 import model.JaFunctionCall;
 import model.JaStatement;
 import codegen.util.JaArrayUtils;
 
 public class JaVisitor extends JaForLoopBaseVisitor<Object> {
-	private Deque<JaBlockContext> blockContextStack = new ArrayDeque<> ();
 	
-	public JaVisitor(JaBlockContext blockContext) {
+	private Deque<JaBlockContext> blockContextStack = new ArrayDeque<> ();
+	private Deque<JaForLoop> forloopStack = new ArrayDeque<> ();
+	
+	public JaVisitor() {
 		super();
-		blockContextStack.push(blockContext);
+		JaForLoop fl = new JaForLoop();
+		fl.initEmptyBlock();
+		forloopStack.push(fl);
+		blockContextStack.push(fl.getBlockContext());
 	}
 	
 	private JaBlockContext getCurrentBlockContext() {
 		return blockContextStack.getFirst();
 	}
 	
+	private JaForLoop getCurrentForLoop() {
+		return forloopStack.getFirst();
+	}
+	
+	public JaForLoop getRootForLoop() {
+		if (forloopStack.size() != 1) {
+			throw new RuntimeException("inconsistent state");
+		} else {
+			return forloopStack.getFirst();
+		}
+	}
+	
 	private int currentLayer = 0;
+	
 	private int globalStatementId = 0;
 	
 	@Override 
 	public Object visitForloop(JaForLoopParser.ForloopContext ctx) {
 		currentLayer ++;
+		visit(ctx.forControl());
 		visit(ctx.block());
 		currentLayer --;
+		return null;
+	}
+
+	
+	@Override
+	public Object visitForControl(JaForLoopParser.ForControlContext ctx) {
+		
+		String forInitStr = ctx.forInit().getText();
+		String forCondStr = ctx.expression(0).getText(); 
+		String forUpdateStr = ctx.expression(1).getText();
+		
+		getCurrentForLoop().initializer = forInitStr;
+		getCurrentForLoop().boolExpression = forCondStr;
+		getCurrentForLoop().update = forUpdateStr;
+		
 		return null;
 	}
 	
@@ -62,15 +97,34 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 			visit(ctx.leftvalue());
 			visit(ctx.expression());
 		} else if (ctx.block() != null && ctx.block().size() > 0) { // if
+		
 			JaBranchStructure branchStructureStat = new JaBranchStructure();
 			branchStructureStat.setId(globalStatementId);
 			branchStructureStat.setStatement(ctx.getText());
 			calcFromBranchStructure(ctx, branchStructureStat);
+		
 		} else if (ctx.expression() != null) { // function call
 			JaStatement stat = new JaFunctionCall();
 			stat.setId(globalStatementId);
 			stat.setStatement(ctx.expression().getText());
 			getCurrentBlockContext().addStatement(stat);
+		
+		} else if (ctx.forloop() != null) { //for loop
+		
+			JaForLoop fl = new JaForLoop(getCurrentForLoop());
+			getCurrentBlockContext().addStatement(fl);
+			
+			JaBlockContext forblockContext = new JaBlockContext(getCurrentBlockContext());
+			fl.setLoopBlockContext(forblockContext);
+			
+			forloopStack.push(fl);
+			blockContextStack.push(fl.getBlockContext());
+			
+			visit(ctx.forloop());
+			
+			forloopStack.pop();
+			blockContextStack.pop();
+			
 		}
 		
 		return null;
@@ -144,6 +198,8 @@ public class JaVisitor extends JaForLoopBaseVisitor<Object> {
 		
 		return null;
 	}
+	
+	
 }
 
 
