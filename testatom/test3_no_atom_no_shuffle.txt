@@ -1,0 +1,68 @@
+platform num = 1
+platform 0 has 3 devices
+Using OpenCL device: Advanced Micro Devices, Inc. Spectre
+ with
+ cl_khr_fp64 cl_amd_fp64 cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_3d_image_writes cl_khr_byte_addressable_store cl_khr_gl_sharing cl_ext_atomic_counters_32 cl_amd_device_attribute_query cl_amd_vec3 cl_amd_printf cl_amd_media_ops cl_amd_media_ops2 cl_amd_popcnt cl_khr_image2d_from_buffer cl_khr_spir cl_khr_gl_event  
+extension
+global memory size 1519386624l 1.42GB
+max_workgroup_size = 256
+profile type FULL_PROFILE
+device type 4
+SIZE	queued_to_submit_time	submit_to_start_time	start_to_end_time	total_profile_time	all_time	copy_time
+1024	6326	1779849	5850	1792025	2418153	23120
+2048	3490	796640	12720	812850	1468491	34320
+4096	6716	548169	6390	561275	1320903	41310
+8192	7817	442464	7590	457871	1200727	29920
+16384	5933	659176	50880	715989	1662489	56040
+32768	6189	468382	16740	491311	1471840	52840
+65536	1846	496586	34320	532752	1676421	136840
+131072	8090	688334	427560	1123984	2789079	275790
+262144	7110	495370	145800	648280	2023254	434960
+524288	7288	454057	296490	757835	3112375	707520
+1048576	10807	614296	680070	1305173	5509198	1052690
+2097152	11157	675820	1258230	1945207	9608342	2268930
+
+Using OpenCL device: Advanced Micro Devices, Inc. Hawaii
+ with
+ cl_khr_fp64 cl_amd_fp64 cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_3d_image_writes cl_khr_byte_addressable_store cl_khr_gl_sharing cl_ext_atomic_counters_32 cl_amd_device_attribute_query cl_amd_vec3 cl_amd_printf cl_amd_media_ops cl_amd_media_ops2 cl_amd_popcnt cl_khr_image2d_from_buffer cl_khr_spir cl_khr_gl_event  
+extension
+global memory size 3221225472l 3.00GB
+max_workgroup_size = 256
+profile type FULL_PROFILE
+device type 4
+SIZE	queued_to_submit_time	submit_to_start_time	start_to_end_time	total_profile_time	all_time	copy_time
+1024	3296	840620	18518	862434	1628450	71407
+2048	6188	588875	13778	608841	1395541	108888
+4096	7089	637591	17778	662458	1828749	186370
+8192	6568	442729	17482	466779	1765885	458964
+16384	6977	472554	17926	497457	2193760	660444
+32768	10450	641149	16889	668488	2535206	584148
+65536	5282	576090	25481	606853	2659231	1068148
+131072	6674	561407	52296	620377	2580847	827111
+262144	7585	532559	106666	646810	4178007	1817926
+524288	6319	451323	228297	685939	4222634	1238667
+1048576	6773	388811	74222	469806	6395537	2546815
+2097152	8723	411669	146370	566762	9569599	3696741
+
+Using OpenCL device: AuthenticAMD AMD A10-7850K Radeon R7, 12 Compute Cores 4C+8G
+ with
+ cl_khr_fp64 cl_amd_fp64 cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_3d_image_writes cl_khr_byte_addressable_store cl_khr_gl_sharing cl_ext_device_fission cl_amd_device_attribute_query cl_amd_vec3 cl_amd_printf cl_amd_media_ops cl_amd_media_ops2 cl_amd_popcnt cl_khr_spir cl_amd_svm cl_khr_gl_event  
+extension
+global memory size 2820280320l 10.63GB
+max_workgroup_size = 1024
+profile type FULL_PROFILE
+device type 2
+SIZE	queued_to_submit_time	submit_to_start_time	start_to_end_time	total_profile_time	all_time	copy_time
+1024	2667	12851	991047	1006565	1148351	3752
+2048	3549	13386	707272	724207	1028708	4796
+4096	6056	16851	392373	415280	516081	11206
+8192	3614	14735	31110	49459	110145	13726
+16384	3803	19950	55101	78854	191970	37595
+32768	3394	13338	921699	938431	1152974	47163
+65536	6294	11704	5609541	5627539	6178839	128750
+131072	4238	15362	5894461	5914061	6484613	273147
+262144	7343	13472	4889514	4910329	6305350	979737
+524288	5592	16137	5704477	5726206	10254301	2890042
+1048576	4705	14554	9893049	9912308	17392901	4884681
+2097152	6683	14143	14159341	14180167	28450986	8633805
+

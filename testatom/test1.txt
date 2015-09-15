@@ -1,0 +1,68 @@
+platform num = 1
+platform 0 has 3 devices
+Using OpenCL device: Advanced Micro Devices, Inc. Spectre
+ with
+ cl_khr_fp64 cl_amd_fp64 cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_3d_image_writes cl_khr_byte_addressable_store cl_khr_gl_sharing cl_ext_atomic_counters_32 cl_amd_device_attribute_query cl_amd_vec3 cl_amd_printf cl_amd_media_ops cl_amd_media_ops2 cl_amd_popcnt cl_khr_image2d_from_buffer cl_khr_spir cl_khr_gl_event  
+extension
+global memory size 1714421760l 1.60GB
+max_workgroup_size = 256
+profile type FULL_PROFILE
+device type 4
+SIZE	queued_to_submit_time	submit_to_start_time	start_to_end_time	total_profile_time	all_time	copy_time
+1024	8115	1640703	5340	1654158	2454427	23720
+2048	8280	687433	5790	701503	1315040	26240
+4096	6594	485194	7920	499708	1268515	42300
+8192	7856	640603	12180	660639	1434761	45880
+16384	7429	549502	25160	582091	1530338	45520
+32768	7353	527416	42680	577449	1499210	65960
+65536	7661	692903	84080	784644	1893468	130320
+131072	8296	680217	350700	1039213	2162928	251400
+262144	8005	521585	1411890	1941480	3875695	425440
+524288	6940	516823	4222950	4746713	7499316	695700
+1048576	5605	607747	11257230	11870582	17327191	1114980
+2097152	15291	643524	26478030	27136845	35606497	2179870
+
+Using OpenCL device: Advanced Micro Devices, Inc. Hawaii
+ with
+ cl_khr_fp64 cl_amd_fp64 cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_3d_image_writes cl_khr_byte_addressable_store cl_khr_gl_sharing cl_ext_atomic_counters_32 cl_amd_device_attribute_query cl_amd_vec3 cl_amd_printf cl_amd_media_ops cl_amd_media_ops2 cl_amd_popcnt cl_khr_image2d_from_buffer cl_khr_spir cl_khr_gl_event  
+extension
+global memory size 3221225472l 3.00GB
+max_workgroup_size = 256
+profile type FULL_PROFILE
+device type 4
+SIZE	queued_to_submit_time	submit_to_start_time	start_to_end_time	total_profile_time	all_time	copy_time
+1024	8418	719551	14962	742931	1762167	68148
+2048	7809	529855	19111	556775	1521553	110519
+4096	6694	634170	22815	663679	1895459	188000
+8192	8298	510180	18370	536848	1612537	193333
+16384	11641	575556	21185	608382	2147094	656149
+32768	15193	467827	21778	504798	2605673	693185
+65536	8334	636378	30963	675675	2539900	1117927
+131072	6278	627988	97926	732192	3061825	1241335
+262144	11942	626538	528000	1166480	4152165	1466370
+524288	5331	356540	292889	654760	4832052	1945038
+1048576	17151	518041	5008593	5543785	10900777	1525926
+2097152	14663	468570	10811852	11295085	19832070	2398667
+
+Using OpenCL device: AuthenticAMD AMD A10-7850K Radeon R7, 12 Compute Cores 4C+8G
+ with
+ cl_khr_fp64 cl_amd_fp64 cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_3d_image_writes cl_khr_byte_addressable_store cl_khr_gl_sharing cl_ext_device_fission cl_amd_device_attribute_query cl_amd_vec3 cl_amd_printf cl_amd_media_ops cl_amd_media_ops2 cl_amd_popcnt cl_khr_spir cl_amd_svm cl_khr_gl_event  
+extension
+global memory size 2820280320l 10.63GB
+max_workgroup_size = 1024
+profile type FULL_PROFILE
+device type 2
+SIZE	queued_to_submit_time	submit_to_start_time	start_to_end_time	total_profile_time	all_time	copy_time
+1024	2376	15326	11265687	11283389	11453651	2928
+2048	6358	12503	442148	461009	553043	9049
+4096	3466	11994	61822	77282	129905	6929
+8192	6355	9227	113968	129550	240418	19730
+16384	8655	15863	270111	294629	479691	60487
+32768	6553	12537	370152	389242	564344	67842
+65536	9444	10016	935341	954801	1243709	136752
+131072	5780	11352	3737603	3754735	4515106	276487
+262144	7622	37219	5639314	5684155	7194556	1065191
+524288	19391	11735	12348334	12379460	17536835	3162022
+1048576	16688	11050	19372456	19400194	27856106	5435757
+2097152	34724	16195	37984477	38035396	52427406	9410875
+

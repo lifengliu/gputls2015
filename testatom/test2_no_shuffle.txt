@@ -1,0 +1,68 @@
+platform num = 1
+platform 0 has 3 devices
+Using OpenCL device: Advanced Micro Devices, Inc. Spectre
+ with
+ cl_khr_fp64 cl_amd_fp64 cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_3d_image_writes cl_khr_byte_addressable_store cl_khr_gl_sharing cl_ext_atomic_counters_32 cl_amd_device_attribute_query cl_amd_vec3 cl_amd_printf cl_amd_media_ops cl_amd_media_ops2 cl_amd_popcnt cl_khr_image2d_from_buffer cl_khr_spir cl_khr_gl_event  
+extension
+global memory size 1519386624l 1.42GB
+max_workgroup_size = 256
+profile type FULL_PROFILE
+device type 4
+SIZE	queued_to_submit_time	submit_to_start_time	start_to_end_time	total_profile_time	all_time	copy_time
+1024	8642	1709327	9760	1727729	2413538	22400
+2048	6216	457968	5130	469314	1192148	23520
+4096	6591	521552	10000	538143	1144621	27200
+8192	3654	595936	7680	607270	1127384	32440
+16384	6496	776676	11840	795012	1684591	52760
+32768	6625	655989	18480	681094	1495742	55880
+65536	8338	498738	35160	542236	1460008	132880
+131072	7649	508512	101760	617921	1706132	233440
+262144	6763	528983	152640	688386	2084861	403360
+524288	9231	508213	296040	813484	3735296	686440
+1048576	12650	623843	714160	1350653	5932955	1214840
+2097152	9719	565332	1603860	2178911	13363974	2121920
+
+Using OpenCL device: Advanced Micro Devices, Inc. Hawaii
+ with
+ cl_khr_fp64 cl_amd_fp64 cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_3d_image_writes cl_khr_byte_addressable_store cl_khr_gl_sharing cl_ext_atomic_counters_32 cl_amd_device_attribute_query cl_amd_vec3 cl_amd_printf cl_amd_media_ops cl_amd_media_ops2 cl_amd_popcnt cl_khr_image2d_from_buffer cl_khr_spir cl_khr_gl_event  
+extension
+global memory size 3221225472l 3.00GB
+max_workgroup_size = 256
+profile type FULL_PROFILE
+device type 4
+SIZE	queued_to_submit_time	submit_to_start_time	start_to_end_time	total_profile_time	all_time	copy_time
+1024	5256	635465	20593	661314	1570489	67853
+2048	14147	620376	14371	648894	1664021	107555
+4096	8937	441300	16000	466237	1416947	111111
+8192	10332	595294	16593	622219	1915900	342815
+16384	7010	440235	16889	464134	1881859	481629
+32768	6266	460344	21926	488536	1915448	640000
+65536	6587	610695	24592	641874	2235816	721629
+131072	4066	614873	46223	665162	3188450	1577333
+262144	8356	485210	103259	596825	2890780	1231259
+524288	11307	556081	235111	802499	5305376	1553779
+1048576	4214	449146	445630	898990	6095211	1829778
+2097152	5327	435559	138074	578960	9364198	3183407
+
+Using OpenCL device: AuthenticAMD AMD A10-7850K Radeon R7, 12 Compute Cores 4C+8G
+ with
+ cl_khr_fp64 cl_amd_fp64 cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_3d_image_writes cl_khr_byte_addressable_store cl_khr_gl_sharing cl_ext_device_fission cl_amd_device_attribute_query cl_amd_vec3 cl_amd_printf cl_amd_media_ops cl_amd_media_ops2 cl_amd_popcnt cl_khr_spir cl_amd_svm cl_khr_gl_event  
+extension
+global memory size 2820280320l 10.63GB
+max_workgroup_size = 1024
+profile type FULL_PROFILE
+device type 2
+SIZE	queued_to_submit_time	submit_to_start_time	start_to_end_time	total_profile_time	all_time	copy_time
+1024	9641	10412	20699	40752	117679	5292
+2048	4689	10175	26733	41597	223998	7610
+4096	4743	10491	38339	53573	260939	11590
+8192	6483	10678	68871	86032	196876	20047
+16384	6124	10331	99014	115469	241022	33361
+32768	5880	10816	186297	202993	382542	72469
+65536	8150	14538	330585	353273	741454	127055
+131072	6748	18979	725084	750811	1568035	462346
+262144	11541	11846	1709077	1732464	3091948	960471
+524288	7054	36026	3306507	3349587	8832689	3055604
+1048576	5625	7748	7350307	7363680	15711905	5131091
+2097152	19153	9397	13328432	13356982	28578271	9316446
+
