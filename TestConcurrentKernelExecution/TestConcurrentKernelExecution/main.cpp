@@ -35,7 +35,7 @@ void showDeviceInfo(const cl_device_id clid) {
 	memset(ext_buf, 0, 8000 * sizeof(char));
 
 	long long global_mem;
-	size_t max_workgroup_size;
+	size_t max_workgroup_size; 
 	char cl_profile_type[15];
 	cl_device_type device_type;
 
@@ -66,16 +66,14 @@ string loadFile(const string& fileLoc) {
 }
 
 void testConcurrentKernel(cl_device_id cid) {
-	int n_queue = 10;
+	int n_queue = 40;
 	int clStatus;
 	cl_context context = clCreateContext(NULL, 1, &cid, NULL, NULL, &clStatus);
 	//cout << loadFile("test.cl") << endl;
-
+	 
 	string program_str = loadFile("test.cl");
 	const char *program_source = program_str.c_str();
-	//printf("\n\n\n\n%s\n\n\n\n\n", program_str.c_str());
-	//printf("\n\n\n\n%s\n\n\n\n\n", program_source);
-
+	
 	cl_program program = clCreateProgramWithSource(context, 1, &program_source, NULL, &clStatus);
 	clStatus = clBuildProgram(program, 1, &cid, NULL, NULL, NULL);
 
@@ -113,19 +111,16 @@ void testConcurrentKernel(cl_device_id cid) {
 	cl_command_queue_properties props[] = { CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0 };
 
 	for (int i = 0; i < n_queue; i++) {
-		//queues[i] = clCreateCommandQueueWithProperties(context, cid, props, &clStatus);
-		queues[i] = clCreateCommandQueue(context, cid, CL_QUEUE_PROFILING_ENABLE, &clStatus);
+		queues[i] = clCreateCommandQueueWithProperties(context, cid, props, &clStatus);
+		//queues[i] = clCreateCommandQueue(context, cid, CL_QUEUE_PROFILING_ENABLE, &clStatus);
 	}
 
 	cl_event ev0 = clCreateUserEvent(context, &clStatus);
 
-	cout << "user event" << clStatus << endl;
-
-
 	cl_event *kernel_events = new cl_event[n_queue];
 	
 	int N = 50000;
-	int calcSize = 100;
+	int calcSize = 90000;
 
 	cl_mem *dev_arr1 = new cl_mem[n_queue];
 	cl_mem *dev_out = new cl_mem[n_queue];
@@ -164,29 +159,29 @@ void testConcurrentKernel(cl_device_id cid) {
 	clWaitForEvents(n_queue, kernel_events);
 
 
-	vector<std::pair<cl_ulong, cl_ulong>> v1;
-
-	cl_ulong minstart = 0x7fffffff * 1000000l;
 	for (int i = 0; i < n_queue; i++) {
 		cl_ulong start = 0;
 		cl_ulong end = 0;
 
-		clStatus = clGetEventProfilingInfo(kernel_events[i], CL_PROFILING_COMMAND_START, sizeof(start), &start, NULL);
-		clStatus = clGetEventProfilingInfo(kernel_events[i], CL_PROFILING_COMMAND_END, sizeof(end), &end, NULL);
-		//cout << "getprofile" << clStatus << endl;
-		//	cout << "Event " << i << " start = " << start - 101145797001574 << " end = " << end - 101145797001574 << endl;
-		v1.push_back(std::make_pair(start, end));
-		if (start < minstart) {
-			minstart = start;
-		}
+		cl_ulong queued = 0;
+		cl_ulong submitted = 0;
+
+		clStatus = clGetEventProfilingInfo(kernel_events[i], CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, NULL);
+		clStatus = clGetEventProfilingInfo(kernel_events[i], CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, NULL);
+		
+		clStatus = clGetEventProfilingInfo(kernel_events[i], CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queued, NULL);
+		clStatus = clGetEventProfilingInfo(kernel_events[i], CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submitted, NULL);
+
+		cout << "Event " << i << " start = " << start << " end = " << end << endl;
+		cout << "Event " << i << " queued time = " << (submitted - queued) << " ready time = " << (start - submitted) << endl;
 	}
 
-	for (int i = 0; i < v1.size(); i++) {
-		cl_ulong start = v1[i].first;
-		cl_ulong end = v1[i].second;
-		cout << "Event " << i << " start = " << start - minstart << " end = " << end - minstart << endl;
+	for (int i = 0; i < num_of_kernels; i++) {
+		clReleaseKernel(kernels[i]);
 	}
-	
+
+	delete[] kernels;
+
 	for (int i = 0; i < n_queue; i++) {
 		clReleaseMemObject(dev_arr1[i]);
 		clReleaseMemObject(dev_out[i]);
@@ -205,6 +200,7 @@ void testConcurrentKernel(cl_device_id cid) {
 	delete[] queues;
 
 	clReleaseContext(context);
+	clReleaseDevice(cid);
 
 	delete[] host_arr1;
 	delete[] host_out;
@@ -251,8 +247,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	delete[] plat_device_map;
-
-	//cout << loadFile("test.cl") << endl;
 
 	return 0;
 }

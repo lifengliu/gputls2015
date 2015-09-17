@@ -36,9 +36,9 @@ __kernel void testatom(__global int *arr1, __global int *out, __const int N, __c
 
 	size_t tid = get_global_id(0);
 	
-	if (tid == 0) {
+	/*if (tid == 0) {
 		printf("%s\n", "fuck");
-	}
+	}*/
 
 	if (tid < N) {
 	    int j;
