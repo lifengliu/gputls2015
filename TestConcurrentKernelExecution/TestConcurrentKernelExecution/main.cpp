@@ -47,12 +47,22 @@ void showDeviceInfo(const cl_device_id clid) {
 	clGetDeviceInfo(clid, CL_DEVICE_PROFILE, sizeof(char) * 14, cl_profile_type, NULL);
 	clGetDeviceInfo(clid, CL_DEVICE_TYPE, sizeof(cl_device_type), &device_type, NULL);
 
+	char dev_version[200];
+	char dev_driver_version[200];
+	
+	memset(dev_version, 0, 200 * sizeof(char));
+	memset(dev_driver_version, 0, 200 * sizeof(char));
+
+	clGetDeviceInfo(clid, CL_DEVICE_VERSION, sizeof(char) * 200, dev_version, NULL);
+	clGetDeviceInfo(clid, CL_DRIVER_VERSION, sizeof(char) * 200, dev_driver_version, NULL);
+
 	printf("Using OpenCL device: %s %s\n with\n %s \nextension\n", vendor_buf, name_buf, ext_buf);
 	printf("global memory size %lld %.2fGB\n", global_mem, global_mem / 1024.0 / 1024.0 / 1024.0);
 	printf("max_workgroup_size = %u\n", max_workgroup_size);
 	printf("profile type %s\n", cl_profile_type);
 	printf("device type %d\n", device_type);
-	
+	printf("device version %s\n", dev_version);
+	printf("device driver version %s\n", dev_driver_version);
 
 	delete[] name_buf;
 	delete[] vendor_buf;
@@ -120,7 +130,7 @@ void testConcurrentKernel(cl_device_id cid) {
 	cl_event *kernel_events = new cl_event[n_queue];
 	
 	int N = 50000;
-	int calcSize = 90000;
+	int calcSize = 90;
 
 	cl_mem *dev_arr1 = new cl_mem[n_queue];
 	cl_mem *dev_out = new cl_mem[n_queue];
