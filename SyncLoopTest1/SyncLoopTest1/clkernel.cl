@@ -234,16 +234,43 @@ __kernel void loop_task_kernel(__global int *P, __global int *Q, __global int *a
 
 
 
-// -------------------------------------------------------------------------------------------------------
-
-// ---------------------------------------------- after remapped -------------------------------------------------------------------------------
-
+// ---------------------------------------evaluate    -------------------------------------------------------------
 
 typedef struct IndexNode1 {
     int groupid;
 	int localid;
     int condVal;
 } IndexNode1;
+
+__kernel void branch_evaluate_task_kernel
+(
+__global int *P, 
+__global int *Q, 
+__global int *a, 
+__global int *c, 
+__const int N, 
+__const int size1, 
+__const int size2,
+__global IndexNode1 *index_node
+)
+{
+    int b0 = get_group_id(0);
+    int t0 = get_local_id(0);
+
+    #define floord(n,d) (((n)<0) ? -((-(n)+(d)-1)/(d)) : (n)/(d))
+    for (int c0 = 32 * b0; c0 < N; c0 += 1048576)
+      if (N >= t0 + c0 + 1) {
+		    int i = get_global_id(0);
+			index_node[i].condVal = select(0, 1, c[t0 + c0] > 0);
+			index_node[i].groupid = b0;
+			index_node[i].localid = t0;
+	  }
+}
+
+
+// ---------------------------------------------- after remapped -------------------------------------------------------------------------------
+
+
 
 
 __kernel void loop_task_kernel_remapped(

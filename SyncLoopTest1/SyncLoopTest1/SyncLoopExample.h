@@ -29,7 +29,7 @@ for (int i = 0; i < N; i++) {
 using std::string;
 
 
-struct IndexNode;
+struct IndexNode1;
 
 class SyncLoopExample {
 public:
@@ -38,7 +38,8 @@ public:
 	
 	void sequentialCPU();
 	void unremappedGPU();
-
+	void remappedGPU();
+	void evaluateBranch();
 	
 private:
 	const int loopsize;
@@ -49,6 +50,7 @@ private:
 	int *host_a;
 	int *host_P;
 	int *host_Q;
+	IndexNode1 *host_indexnode;
 
 	//end host arrays
 
@@ -59,7 +61,7 @@ private:
 	cl_mem dev_a;
 	cl_mem dev_P;
 	cl_mem dev_Q;
-
+	cl_mem dev_indexnode;
 
 
 	//end device arrays
@@ -69,11 +71,14 @@ private:
 	OpenCLRuntimeEnv env;
 	cl_program program;
 	cl_kernel loopKernelOrigin;
+	cl_kernel loopKernelRemapped;
+	cl_kernel branchEvaluateKernel;
 
 	void assign_host_memory();
 	void destroy_host_memory();
 	void init_opencl_resources();
 	void init_host_memory();
+	
 
 	void assign_device_memory();
 	void destroy_device_memory();

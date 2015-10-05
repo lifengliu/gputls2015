@@ -58,7 +58,6 @@ SyncLoopExample::SyncLoopExample(const OpenCLRuntimeEnv& env, string kernelSourc
 
 	assign_host_memory();
 	init_host_memory();
-
 	assign_device_memory();
 
 }
@@ -126,7 +125,7 @@ void SyncLoopExample::init_host_memory()
 	std::random_shuffle(host_P, host_P + loopsize);
 
 
-
+	memset(host_indexnode, 0, sizeof(IndexNode1) * loopsize);
 
 } 
 
@@ -212,8 +211,95 @@ void SyncLoopExample::unremappedGPU()
 	timer["unremappedGPU"] = elapsedtime;
 
 	if (DEBUG) {
-		std::cout << elapsedtime << "ms" << std::endl;
+		std::cout << "unremapped kernel gpu = " << elapsedtime << "ms" << std::endl;
 	}
+
+}
+
+
+
+
+void SyncLoopExample::remappedGPU()
+{
+	int clStatus;
+	loopKernelRemapped = clCreateKernel(program, "loop_task_kernel_remapped", &clStatus);
+
+	auto start = std::chrono::high_resolution_clock::now(); //measure time starting here
+
+#define floord(n,d) (((n)<0) ? -((-(n)+(d)-1)/(d)) : (n)/(d))
+	size_t global_work_size[1] = { (loopsize <= 1048544 ? floord(loopsize + 31, 32) : 32768) * 32 };
+	size_t block_size[1] = { 32 };
+
+	clSetKernelArg(loopKernelRemapped, 0, sizeof(cl_mem), (void *)&dev_P);
+	clSetKernelArg(loopKernelRemapped, 1, sizeof(cl_mem), (void *)&dev_Q);
+	clSetKernelArg(loopKernelRemapped, 2, sizeof(cl_mem), (void *)&dev_a);
+	clSetKernelArg(loopKernelRemapped, 3, sizeof(cl_mem), (void *)&dev_c);
+	clSetKernelArg(loopKernelRemapped, 4, sizeof(int), &loopsize);
+	clSetKernelArg(loopKernelRemapped, 5, sizeof(int), &calcSize1);
+	clSetKernelArg(loopKernelRemapped, 6, sizeof(int), &calcSize2);
+	clSetKernelArg(loopKernelRemapped, 7, sizeof(cl_mem), &dev_indexnode);
+
+	clEnqueueNDRangeKernel(env.get_command_queue(), loopKernelRemapped, 1, NULL, global_work_size, block_size, 0, NULL, NULL);
+
+	clFinish(env.get_command_queue());
+
+	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
+	auto elapsedtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+	timer["remappedLoopGPU"] = elapsedtime;
+
+	if (DEBUG) {
+		std::cout << "remapped loop gpu = " << elapsedtime << "ms" << std::endl;
+	}
+
+}
+
+void SyncLoopExample::evaluateBranch()
+{
+	int clStatus;
+	init_host_memory();
+	branchEvaluateKernel = clCreateKernel(program, "branch_evaluate_task_kernel", &clStatus);
+	
+	if (DEBUG) {
+		printf("create loop task kernel = %d\n", clStatus);
+	}
+
+	auto start = std::chrono::high_resolution_clock::now(); //measure time starting here
+
+#define floord(n,d) (((n)<0) ? -((-(n)+(d)-1)/(d)) : (n)/(d))
+	size_t global_work_size[1] = { (loopsize <= 1048544 ? floord(loopsize + 31, 32) : 32768) * 32 };
+	size_t block_size[1] = { 32 };
+
+	clSetKernelArg(branchEvaluateKernel, 0, sizeof(cl_mem), (void *)&dev_P);
+	clSetKernelArg(branchEvaluateKernel, 1, sizeof(cl_mem), (void *)&dev_Q);
+	clSetKernelArg(branchEvaluateKernel, 2, sizeof(cl_mem), (void *)&dev_a);
+	clSetKernelArg(branchEvaluateKernel, 3, sizeof(cl_mem), (void *)&dev_c);
+	clSetKernelArg(branchEvaluateKernel, 4, sizeof(int), &loopsize);
+	clSetKernelArg(branchEvaluateKernel, 5, sizeof(int), &calcSize1);
+	clSetKernelArg(branchEvaluateKernel, 6, sizeof(int), &calcSize2);
+	clSetKernelArg(branchEvaluateKernel, 7, sizeof(cl_mem), &dev_indexnode);
+
+	clEnqueueNDRangeKernel(env.get_command_queue(), branchEvaluateKernel, 1, NULL, global_work_size, block_size, 0, NULL, NULL);
+
+	clFinish(env.get_command_queue());
+
+	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
+	auto elapsedtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+	timer["evaluateBranchGPU"] = elapsedtime;
+
+	if (DEBUG) {
+		std::cout << "evaluate" << elapsedtime << "ms" << std::endl;
+	}
+
+	// need GPU sorting
+
+	clEnqueueReadBuffer(env.get_command_queue(), dev_indexnode, CL_TRUE, 0, loopsize * sizeof(IndexNode1), host_indexnode, 0, NULL, NULL);
+
+	std::sort(host_indexnode, host_indexnode + loopsize);
+
+	clEnqueueWriteBuffer(env.get_command_queue(), dev_indexnode, CL_TRUE, 0, loopsize * sizeof(IndexNode1), host_indexnode, 0, NULL, NULL);
+
 
 }
 
@@ -223,6 +309,7 @@ void SyncLoopExample::assign_host_memory() {
 	host_a = new int[loopsize * 2];
 	host_P = new int[loopsize];
 	host_Q = new int[loopsize];
+	host_indexnode = new IndexNode1[loopsize];
 }
 
 void SyncLoopExample::destroy_host_memory()
@@ -231,6 +318,7 @@ void SyncLoopExample::destroy_host_memory()
 	delete[] host_a;
 	delete[] host_P;
 	delete[] host_Q;
+	delete[] host_indexnode;
 }
 
 
@@ -241,7 +329,10 @@ void SyncLoopExample::assign_device_memory() {
 	dev_a = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * 2 * sizeof(int), host_a, &clStatus);
 	dev_P = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(int), host_P, &clStatus);
 	dev_Q = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(int), host_Q, &clStatus);
-	
+
+	dev_indexnode = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(IndexNode1), host_indexnode, &clStatus);
+
+
 }
 
 
@@ -251,6 +342,7 @@ void SyncLoopExample::destroy_device_memory() {
 	clReleaseMemObject(dev_a);
 	clReleaseMemObject(dev_P);
 	clReleaseMemObject(dev_Q);
+	clReleaseMemObject(dev_indexnode);
 }
 
 
@@ -258,6 +350,8 @@ void SyncLoopExample::destroy_device_memory() {
 
 void SyncLoopExample::release_opencl_resources() {
 	clReleaseKernel(loopKernelOrigin);
+	clReleaseKernel(loopKernelRemapped);
+	clReleaseKernel(branchEvaluateKernel);
 	clReleaseProgram(program);
 }
 
