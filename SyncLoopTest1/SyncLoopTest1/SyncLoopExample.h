@@ -7,6 +7,8 @@
 #include <string>
 
 
+#include <map>
+using std::map;
 
 /*
 
@@ -41,6 +43,7 @@ public:
 	void remappedGPU();
 	void evaluateBranch();
 	void dependencyChecking();
+	const map<string, long long> &getTimer() const;
 
 private:
 	const int loopsize;
@@ -95,6 +98,7 @@ private:
 	void dc_write_on_a();
 	void dc_read_on_a();
 
+	map<string, long long> timer;
 };
 
 

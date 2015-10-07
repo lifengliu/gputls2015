@@ -2,7 +2,8 @@
 
 #include "OpenCLRuntimeEnv.h"
 #include <string>
-
+#include <map>
+using std::map;
 using std::string;
 
 class PGExample
@@ -14,7 +15,11 @@ public:
 	void specExecute();
 	void dependencyChecking();
 
+	const map<string, long long> getTimer() const;
+
 private:
+	
+	map<string, long long> timer;
 	const int loopsize;
 	const int calcSize1;
 	const int calcSize2;

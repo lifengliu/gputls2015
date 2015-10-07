@@ -19,8 +19,9 @@
 
 #include "SyncLoopExample.h"
 #include "PGExample.h"
+#include <map>
 
-#pragma warning(disable : 4996);
+#pragma warning(disable : 4996)
 
 using std::cin;
 using std::cout;
@@ -30,6 +31,8 @@ using std::string;
 using std::random_shuffle;
 using std::vector;
 using std::sort;
+using std::map;
+
 bool DEBUG = true;
 
 void showDeviceInfo(const cl_device_id clid) {
@@ -86,7 +89,8 @@ string loadFile(const string& fileLoc) {
 int main(int argc, char *argv[]) {
 
 	freopen("gege.txt", "w", stdout);
-
+	auto f = fopen("gege1.txt", "w");
+	
 	unsigned int num_platforms;
 	int clStatus = clGetPlatformIDs(0, NULL, &num_platforms);
 
@@ -121,7 +125,11 @@ int main(int argc, char *argv[]) {
 
 			showDeviceInfo(plat_device_map[i][j]);
 			
-			SyncLoopExample sle(env, s, 5000, 512, 512);
+			int loopsize = 5000;
+			int calcsize1 = 512;
+			int calcsize2 = 512;
+
+			SyncLoopExample sle(env, s, loopsize, calcsize1, calcsize2);
 			
 			//sle.sequentialCPU();
 			sle.unremappedGPU();
@@ -131,10 +139,31 @@ int main(int argc, char *argv[]) {
 			sle.evaluateBranch();
 			sle.remappedGPU();
 			
+			auto m1 = sle.getTimer();
+
+			for (auto it = m1.begin(); it != m1.end(); ++it)
+			{
+				const string& key = it->first;
+				long long value = it->second;
+				fprintf(f, "%s %I64d\n", key.c_str(), value);
+			}
+
+			
 			// ---------------------
-			PGExample pge(env, s1, 5000, 512, 512);
+			PGExample pge(env, s1, loopsize, calcsize1, calcsize2);
 			pge.specExecute();
 			pge.dependencyChecking();
+			
+			auto m2 = pge.getTimer();
+
+			for (auto it = m2.begin(); it != m2.end(); ++it)
+			{
+				const string& key = it->first;
+				long long value = it->second;
+				fprintf(f, "%s %I64d\n", key.c_str(), value);
+			}
+
+
 		}
 	}
 

@@ -25,7 +25,7 @@ typedef struct TraceSet {
 
 
 const static bool DEBUG = true;
-static map<string, long long> timer;
+
 
 
 
@@ -108,6 +108,11 @@ void PGExample::dependencyChecking()
 	dc1();
 	dc2();
 	dc3();
+}
+
+const map<string, long long> PGExample::getTimer() const
+{
+	return timer;
 }
 
 

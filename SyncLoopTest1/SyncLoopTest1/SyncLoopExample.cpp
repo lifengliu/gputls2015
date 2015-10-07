@@ -22,7 +22,6 @@ using std::string;
 
 
 const static bool DEBUG = true;
-static map<string, long long> timer;
 
 /*struct IndexNode {
 	int index;
@@ -317,6 +316,11 @@ void SyncLoopExample::dependencyChecking()
 {
 	dc_write_on_a();
 	dc_read_on_a();
+}
+
+const map<string, long long>& SyncLoopExample::getTimer() const
+{
+	return timer;
 }
 
 
