@@ -168,7 +168,7 @@ void SyncLoopExample::sequentialCPU()
 	}
 
 	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
-	auto elapsedtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
 	timer["seqCPU"] = elapsedtime;
 
@@ -208,7 +208,7 @@ void SyncLoopExample::unremappedGPU()
 	clFinish(env.get_command_queue());
 
 	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
-	auto elapsedtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 	
 	timer["unremappedGPU"] = elapsedtime;
 
@@ -246,7 +246,7 @@ void SyncLoopExample::remappedGPU()
 	clFinish(env.get_command_queue());
 
 	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
-	auto elapsedtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
 	timer["remappedLoopGPU"] = elapsedtime;
 
@@ -286,7 +286,7 @@ void SyncLoopExample::evaluateBranch()
 	clFinish(env.get_command_queue());
 
 	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
-	auto elapsedtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
 	timer["evaluateBranchGPU"] = elapsedtime;
 
@@ -296,12 +296,19 @@ void SyncLoopExample::evaluateBranch()
 
 	// need GPU sorting
 
+	start = std::chrono::high_resolution_clock::now();
 	clEnqueueReadBuffer(env.get_command_queue(), dev_indexnode, CL_TRUE, 0, loopsize * sizeof(IndexNode1), host_indexnode, 0, NULL, NULL);
 
 	std::sort(host_indexnode, host_indexnode + loopsize);
 
 	clEnqueueWriteBuffer(env.get_command_queue(), dev_indexnode, CL_TRUE, 0, loopsize * sizeof(IndexNode1), host_indexnode, 0, NULL, NULL);
+	end = std::chrono::high_resolution_clock::now();
+	elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+	timer["sort"] = elapsedtime;
 
+	if (DEBUG) {
+		std::cout << "sort" << elapsedtime << "ms" << std::endl;
+	}
 
 }
 
@@ -396,7 +403,7 @@ void SyncLoopExample::dc_write_on_a()
 	clFinish(env.get_command_queue());
 
 	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
-	auto elapsedtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
 	timer["dcwriteonaKernel"] = elapsedtime;
 
@@ -435,7 +442,7 @@ void SyncLoopExample::dc_read_on_a()
 	clFinish(env.get_command_queue());
 
 	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
-	auto elapsedtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
 	timer["dcreadonaKernel"] = elapsedtime;
 

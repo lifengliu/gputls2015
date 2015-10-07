@@ -83,12 +83,12 @@ private:
 
 	void assign_host_memory();
 	void destroy_host_memory();
-	void init_opencl_resources();
 	void init_host_memory();
 	
 
 	void assign_device_memory();
 	void destroy_device_memory();
+	void init_opencl_resources();
 	void release_opencl_resources();
 	
 

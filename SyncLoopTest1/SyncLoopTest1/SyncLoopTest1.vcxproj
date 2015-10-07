@@ -149,16 +149,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="PGExample.cpp" />
     <ClCompile Include="SyncLoopExample.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="OpenCLRuntimeEnv.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="PGExample.h" />
     <ClInclude Include="SyncLoopExample.h" />
     <ClInclude Include="OpenCLRuntimeEnv.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="clkernel.cl" />
+    <None Include="pgspec.cl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

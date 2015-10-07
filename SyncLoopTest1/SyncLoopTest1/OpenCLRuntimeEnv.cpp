@@ -1,4 +1,5 @@
 #include "OpenCLRuntimeEnv.h"
+#include <cstdio>
 
 
 
@@ -9,6 +10,10 @@ OpenCLRuntimeEnv::OpenCLRuntimeEnv()
 
 OpenCLRuntimeEnv::~OpenCLRuntimeEnv()
 {
+	//puts("I fucked myself");
+	//clReleaseCommandQueue(current_command_queue);
+	//clReleaseContext(context);
+	//clReleaseDevice(device);
 }
 
 void OpenCLRuntimeEnv::set_command_queue(cl_command_queue queue)

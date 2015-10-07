@@ -18,6 +18,7 @@
 #include "OpenCLRuntimeEnv.h"
 
 #include "SyncLoopExample.h"
+#include "PGExample.h"
 
 #pragma warning(disable : 4996);
 
@@ -100,6 +101,7 @@ int main(int argc, char *argv[]) {
 	cl_device_id **plat_device_map = new cl_device_id*[num_platforms];
 
 	string s = loadFile("clkernel.cl");
+	string s1 = loadFile("pgspec.cl");
 
 	for (size_t i = 0; i < num_platforms; i++) {
 		clStatus = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 0, NULL, &device_num[i]);
@@ -119,7 +121,7 @@ int main(int argc, char *argv[]) {
 
 			showDeviceInfo(plat_device_map[i][j]);
 			
-			SyncLoopExample sle(env, s, 500000, 512, 512);
+			SyncLoopExample sle(env, s, 5000, 512, 512);
 			
 			//sle.sequentialCPU();
 			sle.unremappedGPU();
@@ -130,7 +132,9 @@ int main(int argc, char *argv[]) {
 			sle.remappedGPU();
 			
 			// ---------------------
-			
+			PGExample pge(env, s1, 5000, 512, 512);
+			pge.specExecute();
+			pge.dependencyChecking();
 		}
 	}
 

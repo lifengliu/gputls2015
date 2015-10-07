@@ -24,6 +24,9 @@
     <ClCompile Include="SyncLoopExample.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PGExample.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OpenCLRuntimeEnv.h">
@@ -32,8 +35,12 @@
     <ClInclude Include="SyncLoopExample.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PGExample.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="clkernel.cl" />
+    <None Include="pgspec.cl" />
   </ItemGroup>
 </Project>
