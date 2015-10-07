@@ -67,6 +67,8 @@ SyncLoopExample::~SyncLoopExample() {
 	destroy_host_memory();
 	release_opencl_resources();
 
+	printf("%s\n", "I destroy myself");
+
 }
 
 
@@ -304,6 +306,13 @@ void SyncLoopExample::evaluateBranch()
 }
 
 
+void SyncLoopExample::dependencyChecking()
+{
+	dc_write_on_a();
+	dc_read_on_a();
+}
+
+
 void SyncLoopExample::assign_host_memory() {
 	host_c = new int[loopsize];
 	host_a = new int[loopsize * 2];
@@ -329,13 +338,13 @@ void SyncLoopExample::assign_device_memory() {
 	dev_a = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * 2 * sizeof(int), host_a, &clStatus);
 	dev_P = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(int), host_P, &clStatus);
 	dev_Q = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(int), host_Q, &clStatus);
+	
+	dev_raceflag = clCreateBuffer(env.get_context(), CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int), &raceFlag, &clStatus);
 
 	dev_indexnode = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(IndexNode1), host_indexnode, &clStatus);
-
-
+	dev_buffer = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE, loopsize * 2 * sizeof(int), NULL, &clStatus);
+	
 }
-
-
 
 void SyncLoopExample::destroy_device_memory() {
 	clReleaseMemObject(dev_c);
@@ -343,15 +352,96 @@ void SyncLoopExample::destroy_device_memory() {
 	clReleaseMemObject(dev_P);
 	clReleaseMemObject(dev_Q);
 	clReleaseMemObject(dev_indexnode);
+	clReleaseMemObject(dev_buffer);
+	clReleaseMemObject(dev_raceflag);
 }
-
-
-
 
 void SyncLoopExample::release_opencl_resources() {
 	clReleaseKernel(loopKernelOrigin);
 	clReleaseKernel(loopKernelRemapped);
 	clReleaseKernel(branchEvaluateKernel);
+	clReleaseKernel(dcwriteonaKernel);
+	clReleaseKernel(dcreadonaKernel);
 	clReleaseProgram(program);
+}
+
+void SyncLoopExample::dc_write_on_a()
+{
+	int clStatus;
+	dcwriteonaKernel = clCreateKernel(program, "dc_write_on_a", &clStatus);
+	
+	int zero = 0;
+	clEnqueueFillBuffer(env.get_command_queue(), dev_buffer, &zero, sizeof(int), 0, sizeof(int) * loopsize * 2, 0, NULL, NULL);
+	clEnqueueFillBuffer(env.get_command_queue(), dev_raceflag, &zero, sizeof(int), 0, sizeof(int), 0, NULL, NULL);
+
+	auto start = std::chrono::high_resolution_clock::now(); //measure time starting here
+
+#define floord(n,d) (((n)<0) ? -((-(n)+(d)-1)/(d)) : (n)/(d))
+	size_t global_work_size[1] = { (loopsize <= 1048544 ? floord(loopsize + 31, 32) : 32768) * 32 };
+	size_t block_size[1] = { 32 };
+
+	clSetKernelArg(dcwriteonaKernel, 0, sizeof(cl_mem), (void *)&dev_P);
+	clSetKernelArg(dcwriteonaKernel, 1, sizeof(cl_mem), (void *)&dev_Q);
+	clSetKernelArg(dcwriteonaKernel, 2, sizeof(cl_mem), (void *)&dev_a);
+	clSetKernelArg(dcwriteonaKernel, 3, sizeof(cl_mem), (void *)&dev_c);
+	clSetKernelArg(dcwriteonaKernel, 4, sizeof(int), &loopsize);
+	clSetKernelArg(dcwriteonaKernel, 5, sizeof(int), &calcSize1);
+	clSetKernelArg(dcwriteonaKernel, 6, sizeof(int), &calcSize2);
+	clSetKernelArg(dcwriteonaKernel, 7, sizeof(cl_mem), &dev_raceflag);
+	clSetKernelArg(dcwriteonaKernel, 8, sizeof(cl_mem), &dev_buffer);
+
+
+	clEnqueueNDRangeKernel(env.get_command_queue(), dcwriteonaKernel, 1, NULL, global_work_size, block_size, 0, NULL, NULL);
+
+	clFinish(env.get_command_queue());
+
+	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
+	auto elapsedtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+	timer["dcwriteonaKernel"] = elapsedtime;
+
+	if (DEBUG) {
+		std::cout << "dcwriteonaKernel" << elapsedtime << "ms" << std::endl;
+	}
+
+	//clReleaseKernel(dcwriteonaKernel);
+	
+}
+
+void SyncLoopExample::dc_read_on_a()
+{
+	int clStatus;
+	dcreadonaKernel = clCreateKernel(program, "dc_read_on_a", &clStatus);
+
+	auto start = std::chrono::high_resolution_clock::now(); //measure time starting here
+
+#define floord(n,d) (((n)<0) ? -((-(n)+(d)-1)/(d)) : (n)/(d))
+	size_t global_work_size[1] = { (loopsize <= 1048544 ? floord(loopsize + 31, 32) : 32768) * 32 };
+	size_t block_size[1] = { 32 };
+
+	clSetKernelArg(dcreadonaKernel, 0, sizeof(cl_mem), (void *)&dev_P);
+	clSetKernelArg(dcreadonaKernel, 1, sizeof(cl_mem), (void *)&dev_Q);
+	clSetKernelArg(dcreadonaKernel, 2, sizeof(cl_mem), (void *)&dev_a);
+	clSetKernelArg(dcreadonaKernel, 3, sizeof(cl_mem), (void *)&dev_c);
+	clSetKernelArg(dcreadonaKernel, 4, sizeof(int), &loopsize);
+	clSetKernelArg(dcreadonaKernel, 5, sizeof(int), &calcSize1);
+	clSetKernelArg(dcreadonaKernel, 6, sizeof(int), &calcSize2);
+	clSetKernelArg(dcreadonaKernel, 7, sizeof(cl_mem), &dev_raceflag);
+	clSetKernelArg(dcreadonaKernel, 8, sizeof(cl_mem), &dev_buffer);
+
+
+	clEnqueueNDRangeKernel(env.get_command_queue(), dcreadonaKernel, 1, NULL, global_work_size, block_size, 0, NULL, NULL);
+
+	clFinish(env.get_command_queue());
+
+	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
+	auto elapsedtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+	timer["dcreadonaKernel"] = elapsedtime;
+
+	if (DEBUG) {
+		std::cout << "dcreadonaKernel" << elapsedtime << "ms" << std::endl;
+	}
+
 }
 

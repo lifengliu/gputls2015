@@ -119,17 +119,19 @@ int main(int argc, char *argv[]) {
 
 			showDeviceInfo(plat_device_map[i][j]);
 			
-			SyncLoopExample sle(env, s, 500000, 5000, 500);
+			SyncLoopExample sle(env, s, 500000, 512, 512);
 			
 			//sle.sequentialCPU();
 			sle.unremappedGPU();
 
 			// --------------------
+			sle.dependencyChecking();
 			sle.evaluateBranch();
 			sle.remappedGPU();
 			
+			// ---------------------
+			
 		}
-
 	}
 
 

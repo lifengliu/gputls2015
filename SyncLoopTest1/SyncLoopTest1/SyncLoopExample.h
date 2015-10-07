@@ -40,7 +40,8 @@ public:
 	void unremappedGPU();
 	void remappedGPU();
 	void evaluateBranch();
-	
+	void dependencyChecking();
+
 private:
 	const int loopsize;
 	const int calcSize1;
@@ -52,6 +53,8 @@ private:
 	int *host_Q;
 	IndexNode1 *host_indexnode;
 
+
+	int raceFlag;
 	//end host arrays
 
 
@@ -62,7 +65,9 @@ private:
 	cl_mem dev_P;
 	cl_mem dev_Q;
 	cl_mem dev_indexnode;
-
+	
+	cl_mem dev_buffer;
+	cl_mem dev_raceflag;
 
 	//end device arrays
 
@@ -73,6 +78,8 @@ private:
 	cl_kernel loopKernelOrigin;
 	cl_kernel loopKernelRemapped;
 	cl_kernel branchEvaluateKernel;
+	cl_kernel dcwriteonaKernel;
+	cl_kernel dcreadonaKernel;
 
 	void assign_host_memory();
 	void destroy_host_memory();
@@ -84,6 +91,10 @@ private:
 	void destroy_device_memory();
 	void release_opencl_resources();
 	
+
+	void dc_write_on_a();
+	void dc_read_on_a();
+
 };
 
 

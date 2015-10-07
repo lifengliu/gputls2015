@@ -214,6 +214,70 @@ int comp2(int CALC_SIZE) {
 }
 
 
+
+
+// -----------------------------------------------------------------------------------------
+
+__kernel void dc_write_on_a(
+__global int *P, 
+__global int *Q, 
+__global int *a, 
+__global int *c, 
+__const int N, 
+__const int size1, 
+__const int size2, 
+__global int *raceFlag,
+__global int *buffer
+)
+{
+    int b0 = get_group_id(0);
+    int t0 = get_local_id(0);
+
+	int writeTimes = 0;
+
+    #define floord(n,d) (((n)<0) ? -((-(n)+(d)-1)/(d)) : (n)/(d))
+    for (int c0 = 32 * b0; c0 < N; c0 += 1048576)
+      if (N >= t0 + c0 + 1) {
+			if (c[t0+c0] > 0) {
+				writeTimes = atomic_inc(&buffer[Q[t0 + c0]]);
+				raceFlag[0] |= writeTimes > 0;
+			} else {
+				writeTimes = atomic_inc(&buffer[Q[t0 + c0]]);
+				raceFlag[0] |= writeTimes > 0;
+			}
+	  }
+      
+}
+
+
+__kernel void dc_read_on_a(
+__global int *P, 
+__global int *Q, 
+__global int *a, 
+__global int *c, 
+__const int N, 
+__const int size1, 
+__const int size2, 
+__global int *raceFlag,
+__global int *buffer
+)
+{
+    int b0 = get_group_id(0);
+    int t0 = get_local_id(0);
+
+    #define floord(n,d) (((n)<0) ? -((-(n)+(d)-1)/(d)) : (n)/(d))
+    for (int c0 = 32 * b0; c0 < N; c0 += 1048576)
+      if (N >= t0 + c0 + 1) {
+			if (c[t0 + c0] > 0) {
+			    raceFlag[0] |= buffer[P[t0 + c0]] > 0 ;
+			} else {
+			}
+	  }
+}
+
+
+
+
 // ---------------------------------------------------------------------------------------------------
 
 
