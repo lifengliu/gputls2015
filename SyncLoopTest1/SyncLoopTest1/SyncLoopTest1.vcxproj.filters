@@ -27,6 +27,18 @@
     <ClCompile Include="PGExample.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SortingAlgorithm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ParallelBitonicLocalSort.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sortcommon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ParallelBitonicASort.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OpenCLRuntimeEnv.h">
@@ -38,9 +50,27 @@
     <ClInclude Include="PGExample.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SortingAlgorithm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MiniCL.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParallelBitonicLocalSort.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sortcommon.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParallelBitonicASort.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="clkernel.cl" />
     <None Include="pgspec.cl" />
+    <None Include="SortKernels.cl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

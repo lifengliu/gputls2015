@@ -149,19 +149,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ParallelBitonicASort.cpp" />
+    <ClCompile Include="ParallelBitonicLocalSort.cpp" />
     <ClCompile Include="PGExample.cpp" />
+    <ClCompile Include="sortcommon.cpp" />
+    <ClCompile Include="SortingAlgorithm.cpp" />
     <ClCompile Include="SyncLoopExample.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="OpenCLRuntimeEnv.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MiniCL.h" />
+    <ClInclude Include="ParallelBitonicASort.h" />
+    <ClInclude Include="ParallelBitonicLocalSort.h" />
     <ClInclude Include="PGExample.h" />
+    <ClInclude Include="sortcommon.h" />
+    <ClInclude Include="SortingAlgorithm.h" />
     <ClInclude Include="SyncLoopExample.h" />
     <ClInclude Include="OpenCLRuntimeEnv.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="clkernel.cl" />
     <None Include="pgspec.cl" />
+    <None Include="SortKernels.cl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

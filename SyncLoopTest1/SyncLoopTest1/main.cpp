@@ -21,6 +21,19 @@
 #include "PGExample.h"
 #include <map>
 
+#include "SortingAlgorithm.h"
+#include "ParallelBitonicLocalSort.h"
+#include "ParallelBitonicASort.h"
+#include <Windows.h>
+
+double getRealTime()
+{
+	LARGE_INTEGER freq, value;
+	QueryPerformanceFrequency(&freq);
+	QueryPerformanceCounter(&value);
+	return (double)value.QuadPart / (double)freq.QuadPart;
+}
+
 #pragma warning(disable : 4996)
 
 using std::cin;
@@ -86,6 +99,115 @@ string loadFile(const string& fileLoc) {
 
 
 
+// Test a sorting algorithm
+/*bool testSortingAlgorithm(int maxN, const SortingAlgorithm & algo, OpenCLRuntimeEnv& env1)
+{
+	// Setup OpenCL
+	cl_context clContext = env1.get_context();
+	
+	if (clContext == 0) { printf("Context creation failed\n"); exit(1); }
+	std::string errorMsg;
+	char options[2000];
+	//std::string algoOptions;
+	//algo.getOptions(algoOptions);
+	//snprintf(options, 2000, "-cl-fast-relaxed-math -D CONFIG_USE_VALUE=%d %s ", CONFIG_USE_VALUE, algoOptions.c_str());
+
+	string s = loadFile("SortKernels.cl");
+	//std::cout << s << std::endl;
+	Context * c = Context::create(clContext, s.c_str(), options, KernelNames, errorMsg);
+	clReleaseContext(clContext);
+	if (c == 0) { printf("%s\n", errorMsg.c_str()); exit(1); }
+	int targetDevice = c->getNDevices() - 1; // Run on last available device (assuming the X server is running on the first device)
+											 // printf("Initialization OK [%s] targetDevice=%d\n",options,targetDevice);
+	printf("____________________________________________________________\n");
+#if CONFIG_USE_VALUE
+	printf("Key+Value / ");
+#else
+	printf("Key / ");
+#endif
+	algo.printID();
+	
+	// Setup test vector
+	data_t * a = new data_t[maxN];
+	data_t * b = new data_t[maxN];
+	for (int i = 0; i<maxN; i++)
+	{
+#if 1
+		cl_uint x = (cl_uint)0;
+		x = (x << 14) | ((cl_uint)rand() & 0x3FFF);
+		x = (x << 14) | ((cl_uint)rand() & 0x3FFF);
+#else
+		cl_uint x = (cl_uint)(maxN - i);
+#endif
+		setKey(a[i], x);
+		setValue(a[i], (cl_uint)i);
+	}
+
+	bool ok = true;
+	for (int n = 256; n <= maxN && ok; n <<= 1)
+	{
+		// if (n < maxN) continue; // DEBUG
+
+		// Test for N
+		size_t sz = n * sizeof(data_t);
+		cl_mem inBuffer = c->createBuffer(CL_MEM_READ_ONLY, sz, 0);
+		cl_mem outBuffer = c->createBuffer(CL_MEM_READ_WRITE, sz, 0);
+		Event e;
+		e = c->enqueueWrite(targetDevice, inBuffer, true, 0, sz, a, EventVector()); // blocking
+		c->finish(targetDevice);
+
+		double t0 = getRealTime();
+		double dt = 0;
+		double nit = 0;
+		for (int it = 1; it <= 1 << 20 && ok; it <<= 1)
+		{
+			for (int i = 0; i<it && ok; i++)
+			{
+				ok &= algo.sort(c, targetDevice, n, inBuffer, outBuffer);
+				c->finish(targetDevice);
+			}
+			dt = getRealTime() - t0;
+			nit += (double)it;
+			if (dt > 0.5) break; // min time
+		}
+		if (!ok) { ok = true; continue; } // ignore launch errors
+		dt /= nit;
+
+		e = c->enqueueRead(targetDevice, outBuffer, true, 0, sz, b, EventVector()); // blocking
+		double u = 1.0e-6 * (double)n / dt;
+		printf("N=2^%d  R=%.2f Mkeys/s\n", log2(n), u);
+
+		ok &= algo.checkOutput(n, a, b);
+#if 0
+		// Check debug output is all 0
+		for (int i = 0; i<n; i++)
+		{
+			if (getKey(b[i]) != 0)
+			{
+				printf("Non-zero value, I=%d\n", i);
+				for (int j = i - 10; j <= i + 10; j++)
+				{
+					if (j<0 || j >= n) continue;
+					printf("OUT[%d] = %u\n", j, b[j]);
+				}
+				ok = false;
+				break;
+			}
+		}
+#endif
+		clReleaseMemObject(inBuffer);
+		clReleaseMemObject(outBuffer);
+
+		if (dt > 4.0 || !ok) break; // Too long
+	}
+
+	delete[] a;
+	delete[] b;
+	delete c;
+
+	return ok;
+}*/
+
 int main(int argc, char *argv[]) {
 
 	freopen("gege.txt", "w", stdout);
@@ -106,6 +228,7 @@ int main(int argc, char *argv[]) {
 
 	string s = loadFile("clkernel.cl");
 	string s1 = loadFile("pgspec.cl");
+	string sortsrc = loadFile("SortKernels.cl");
 
 	for (size_t i = 0; i < num_platforms; i++) {
 		clStatus = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 0, NULL, &device_num[i]);
@@ -125,11 +248,36 @@ int main(int argc, char *argv[]) {
 
 			showDeviceInfo(plat_device_map[i][j]);
 			
-			int loopsize = 262144*2;
+			int loopsize = 2048;
 			int calcsize1 = 1024;
 			int calcsize2 = 1024;
 
-			SyncLoopExample sle(env, s, loopsize, calcsize1, calcsize2);
+			int dn = 1024;
+			data_t *d1 = new data_t[dn];
+			data_t *d2 = new data_t[dn];
+			
+			for (int i = 0; i < dn; i++) {
+				setKey(d1[i], dn - i + 50);
+				setValue(d1[i], i);
+			}
+			cl_mem in = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(data_t) * dn, d1, &clStatus);
+			cl_mem out = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(data_t) * dn, NULL, &clStatus);
+
+			ParallelBitonicASort psort;
+			psort.sort(sortsrc, env, dn, in, out);
+			clFinish(env.get_command_queue());
+			clStatus = clEnqueueReadBuffer(env.get_command_queue(), out, CL_TRUE, 0, sizeof(data_t) * dn, d2, 0, NULL, NULL);
+
+			for (int i = 0; i < 1024; i++) {
+				printf("%ud %ud\n", getKey(d2[i]), getValue(d2[i]));
+			}
+			delete[] d1;
+			delete[] d2;
+			clReleaseMemObject(in);
+			clReleaseMemObject(out);
+
+
+			/*SyncLoopExample sle(env, s, loopsize, calcsize1, calcsize2);
 			
 			//sle.sequentialCPU();
 			sle.unremappedGPU();
@@ -145,6 +293,8 @@ int main(int argc, char *argv[]) {
 			fprintf(f, "%d\t%d\t%I64d\t%I64d\t%I64d\t%I64d\t%I64d\n", loopsize, j + 1, m1["dc"], m1["evaluateBranchGPU"],
 				m1["sort"], m1["remappedLoopGPU"], m1["unremappedGPU"]
 				);
+			*/
+
 
 			/*for (auto it = m1.begin(); it != m1.end(); ++it)
 			{
@@ -155,12 +305,16 @@ int main(int argc, char *argv[]) {
 
 			puts(""); */
 			// ---------------------
+			
 			/*PGExample pge(env, s1, loopsize, calcsize1, calcsize2);
 			pge.specExecute();
 			pge.dependencyChecking();
-			
-
 			auto m2 = pge.getTimer();
+			fprintf(f, "%I64d\t%I64d\n", m2["dc"], m2["specloopexec"]);
+			*/
+
+
+			/*auto m2 = pge.getTimer();
 			long long totalTimePG = 0;
 			for (auto it = m2.begin(); it != m2.end(); ++it)
 			{
@@ -168,8 +322,8 @@ int main(int argc, char *argv[]) {
 				long long value = it->second;
 				totalTimePG += value;
 				fprintf(f, "%I64d\t", value);
-			}
-			*/
+			}*/
+			
 		}
 	}
 
