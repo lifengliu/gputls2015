@@ -105,9 +105,15 @@ void PGExample::specExecute()
 
 void PGExample::dependencyChecking()
 {
+	auto start = std::chrono::high_resolution_clock::now(); //measure time starting here
+	
 	dc1();
 	dc2();
 	dc3();
+
+	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
+	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+	timer["dc"] = elapsedtime;
 }
 
 const map<string, long long> PGExample::getTimer() const
@@ -235,6 +241,7 @@ void PGExample::init_opencl_resources()
 		char *log = new char[len];
 		clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, len, log, NULL);
 		printf("%s\n", log);
+		delete[] log;
 	}
 
 

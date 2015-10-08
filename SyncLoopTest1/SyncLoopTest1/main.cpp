@@ -125,9 +125,9 @@ int main(int argc, char *argv[]) {
 
 			showDeviceInfo(plat_device_map[i][j]);
 			
-			int loopsize = 5000;
-			int calcsize1 = 512;
-			int calcsize2 = 512;
+			int loopsize = 262144*2;
+			int calcsize1 = 1024;
+			int calcsize2 = 1024;
 
 			SyncLoopExample sle(env, s, loopsize, calcsize1, calcsize2);
 			
@@ -140,30 +140,36 @@ int main(int argc, char *argv[]) {
 			sle.remappedGPU();
 			
 			auto m1 = sle.getTimer();
+			long long totalTimeOurs = 0;
 
-			for (auto it = m1.begin(); it != m1.end(); ++it)
+			fprintf(f, "%d\t%d\t%I64d\t%I64d\t%I64d\t%I64d\t%I64d\n", loopsize, j + 1, m1["dc"], m1["evaluateBranchGPU"],
+				m1["sort"], m1["remappedLoopGPU"], m1["unremappedGPU"]
+				);
+
+			/*for (auto it = m1.begin(); it != m1.end(); ++it)
 			{
 				const string& key = it->first;
 				long long value = it->second;
-				fprintf(f, "%s %I64d\n", key.c_str(), value);
+				fprintf(f, "%s\t%I64d\n", key.c_str(), value);
 			}
 
-			
+			puts(""); */
 			// ---------------------
-			PGExample pge(env, s1, loopsize, calcsize1, calcsize2);
+			/*PGExample pge(env, s1, loopsize, calcsize1, calcsize2);
 			pge.specExecute();
 			pge.dependencyChecking();
 			
-			auto m2 = pge.getTimer();
 
+			auto m2 = pge.getTimer();
+			long long totalTimePG = 0;
 			for (auto it = m2.begin(); it != m2.end(); ++it)
 			{
 				const string& key = it->first;
 				long long value = it->second;
-				fprintf(f, "%s %I64d\n", key.c_str(), value);
+				totalTimePG += value;
+				fprintf(f, "%I64d\t", value);
 			}
-
-
+			*/
 		}
 	}
 

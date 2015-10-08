@@ -314,8 +314,14 @@ void SyncLoopExample::evaluateBranch()
 
 void SyncLoopExample::dependencyChecking()
 {
+	auto start = std::chrono::high_resolution_clock::now();
 	dc_write_on_a();
 	dc_read_on_a();
+	auto end = std::chrono::high_resolution_clock::now();
+	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+	timer["dc"] = elapsedtime;
+
+
 }
 
 const map<string, long long>& SyncLoopExample::getTimer() const
