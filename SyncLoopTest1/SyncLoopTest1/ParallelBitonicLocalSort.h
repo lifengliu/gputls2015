@@ -5,8 +5,9 @@
 class ParallelBitonicLocalSort : public SortingAlgorithm
 {
 public:
-	ParallelBitonicLocalSort(int wg) : mWG(wg) { }
-	bool sort(std::string src, OpenCLRuntimeEnv& env, int n, cl_mem in, cl_mem out) const;
+	ParallelBitonicLocalSort(const OpenCLRuntimeEnv &env, int wg, std::string src);
+	virtual ~ParallelBitonicLocalSort();
+	bool sort(int n, cl_mem in, cl_mem out) const;
 
 	double memoryIO(int n) const;
 	bool checkOutput(int n, const data_t * in, const data_t * out) const;
@@ -14,6 +15,11 @@ public:
 	void printID() const;
 
 private:
-	int mWG;
+	const int mWG;
+	const OpenCLRuntimeEnv &env;
+	std::string src;
+	cl_program program;
+	cl_kernel kernel;
+
 };
 

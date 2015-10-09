@@ -2,9 +2,12 @@
 
 #pragma warning(disable : 4996)
 
+#include <chrono>
+#include <iostream>
 
 bool ParallelBitonicASort::sort(std::string src, OpenCLRuntimeEnv & env, int n, cl_mem in, cl_mem out) const
 {
+
 
 	int clStatus;
 	cl_program program;

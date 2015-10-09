@@ -2,6 +2,8 @@
 #include "SortingAlgorithm.h"
 class ParallelBitonicASort : public SortingAlgorithm
 {
+
+
 public:
 	ParallelBitonicASort() { }
 	bool sort(std::string src, OpenCLRuntimeEnv& env, int n, cl_mem in, cl_mem out) const;

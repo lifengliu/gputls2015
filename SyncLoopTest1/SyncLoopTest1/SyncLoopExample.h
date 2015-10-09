@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "sortcommon.h"
 
 #include <map>
 using std::map;
@@ -31,8 +32,6 @@ for (int i = 0; i < N; i++) {
 using std::string;
 
 
-struct IndexNode1;
-
 class SyncLoopExample {
 public:
 	SyncLoopExample(const OpenCLRuntimeEnv& env, string kernelSourceCode, int loopsize, int calcSize1, int calcSize2);
@@ -54,7 +53,7 @@ private:
 	int *host_a;
 	int *host_P;
 	int *host_Q;
-	IndexNode1 *host_indexnode;
+	data_t *host_indexnode;
 
 
 	int raceFlag;
@@ -67,7 +66,7 @@ private:
 	cl_mem dev_a;
 	cl_mem dev_P;
 	cl_mem dev_Q;
-	cl_mem dev_indexnode;
+	cl_mem dev_indexnode, dev_indexnodeout;
 	
 	cl_mem dev_buffer;
 	cl_mem dev_raceflag;

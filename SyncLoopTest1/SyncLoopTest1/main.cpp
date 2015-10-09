@@ -231,11 +231,12 @@ int main(int argc, char *argv[]) {
 	string sortsrc = loadFile("SortKernels.cl");
 
 	for (size_t i = 0; i < num_platforms; i++) {
-		clStatus = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 0, NULL, &device_num[i]);
+		clStatus = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 0, NULL, &device_num[i]);
 		printf("platform %u has %u devices\n", i, device_num[i]);
 
 		plat_device_map[i] = new cl_device_id[device_num[i]];
-		clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, device_num[i], plat_device_map[i], NULL);
+		//CL_DEVICE_TYPE_ALL
+		clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, device_num[i], plat_device_map[i], NULL);
 
 		for (size_t j = 0; j < device_num[i]; j++) {
 			OpenCLRuntimeEnv env;
@@ -248,11 +249,11 @@ int main(int argc, char *argv[]) {
 
 			showDeviceInfo(plat_device_map[i][j]);
 			
-			int loopsize = 2048;
+			int loopsize = 1048576;
 			int calcsize1 = 1024;
 			int calcsize2 = 1024;
 
-			int dn = 1024;
+			/*int dn = 1024;
 			data_t *d1 = new data_t[dn];
 			data_t *d2 = new data_t[dn];
 			
@@ -275,9 +276,9 @@ int main(int argc, char *argv[]) {
 			delete[] d2;
 			clReleaseMemObject(in);
 			clReleaseMemObject(out);
+			*/
 
-
-			/*SyncLoopExample sle(env, s, loopsize, calcsize1, calcsize2);
+			SyncLoopExample sle(env, s, loopsize, calcsize1, calcsize2);
 			
 			//sle.sequentialCPU();
 			sle.unremappedGPU();
@@ -288,14 +289,13 @@ int main(int argc, char *argv[]) {
 			sle.remappedGPU();
 			
 			auto m1 = sle.getTimer();
-			long long totalTimeOurs = 0;
 
 			fprintf(f, "%d\t%d\t%I64d\t%I64d\t%I64d\t%I64d\t%I64d\n", loopsize, j + 1, m1["dc"], m1["evaluateBranchGPU"],
 				m1["sort"], m1["remappedLoopGPU"], m1["unremappedGPU"]
 				);
-			*/
+			
 
-
+			
 			/*for (auto it = m1.begin(); it != m1.end(); ++it)
 			{
 				const string& key = it->first;

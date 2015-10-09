@@ -15,9 +15,9 @@ public:
 	void set_context(cl_context context);
 	void set_device(cl_device_id dev_id);
 
-	cl_command_queue get_command_queue();
-	cl_device_id get_device_id();
-	cl_context get_context();
+	cl_command_queue get_command_queue() const;
+	cl_device_id get_device_id() const;
+	cl_context get_context() const;
 
 private:
 	cl_command_queue current_command_queue;

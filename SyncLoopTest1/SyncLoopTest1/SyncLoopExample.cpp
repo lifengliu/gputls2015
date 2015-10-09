@@ -13,7 +13,11 @@
 #include <string>
 #include <iostream>
 
+#include <fstream>
+#include <streambuf>
 #include <map>
+#include "ParallelBitonicASort.h"
+#include "ParallelBitonicLocalSort.h"
 
 using std::fill;
 using std::map;
@@ -31,16 +35,6 @@ const static bool DEBUG = true;
 		return this->condVal < rhs.condVal || (this->condVal == rhs.condVal && this->index < rhs.index);
 	}
 };*/
-
-
-struct IndexNode1 {
-	int groupid;
-	int localid;
-	int condVal;
-	bool operator <(const IndexNode1& rhs) {
-		return this->condVal < rhs.condVal;
-	}
-};
 
 
 
@@ -94,8 +88,9 @@ void SyncLoopExample::init_opencl_resources() {
 		char *log = new char[len];
 		clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, len, log, NULL);
 		printf("%s\n", log);
+		delete[] log;
+		return;
 	}
-
 
 }
 
@@ -126,7 +121,7 @@ void SyncLoopExample::init_host_memory()
 	std::random_shuffle(host_P, host_P + loopsize);
 
 
-	memset(host_indexnode, 0, sizeof(IndexNode1) * loopsize);
+	memset(host_indexnode, 0, sizeof(data_t) * loopsize);
 
 } 
 
@@ -238,11 +233,13 @@ void SyncLoopExample::remappedGPU()
 	clSetKernelArg(loopKernelRemapped, 4, sizeof(int), &loopsize);
 	clSetKernelArg(loopKernelRemapped, 5, sizeof(int), &calcSize1);
 	clSetKernelArg(loopKernelRemapped, 6, sizeof(int), &calcSize2);
-	clSetKernelArg(loopKernelRemapped, 7, sizeof(cl_mem), &dev_indexnode);
+	clSetKernelArg(loopKernelRemapped, 7, sizeof(cl_mem), &dev_indexnodeout);
 
 	clEnqueueNDRangeKernel(env.get_command_queue(), loopKernelRemapped, 1, NULL, global_work_size, block_size, 0, NULL, NULL);
 
 	clFinish(env.get_command_queue());
+
+	
 
 	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
 	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
@@ -254,6 +251,13 @@ void SyncLoopExample::remappedGPU()
 	}
 
 }
+
+static string loadFile(const string& fileLoc) {
+	std::ifstream t1(fileLoc);
+	string str((std::istreambuf_iterator<char>(t1)), std::istreambuf_iterator<char>());
+	return str;
+}
+
 
 void SyncLoopExample::evaluateBranch()
 {
@@ -295,15 +299,30 @@ void SyncLoopExample::evaluateBranch()
 
 	// need GPU sorting
 
+	
+	//clEnqueueReadBuffer(env.get_command_queue(), dev_indexnode, CL_TRUE, 0, loopsize * sizeof(data_t), host_indexnode, 0, NULL, NULL);
+
+	std::string s1 = loadFile("SortKernels.cl");
+	ParallelBitonicLocalSort psort(env, 128, s1);
+	
+
 	start = std::chrono::high_resolution_clock::now();
-	clEnqueueReadBuffer(env.get_command_queue(), dev_indexnode, CL_TRUE, 0, loopsize * sizeof(IndexNode1), host_indexnode, 0, NULL, NULL);
+	psort.sort(loopsize, dev_indexnode, dev_indexnodeout);
+	//std::sort(host_indexnode, host_indexnode + loopsize);
 
-	std::sort(host_indexnode, host_indexnode + loopsize);
+	//data_t *host_tmp = new data_t[loopsize];
+	//clEnqueueReadBuffer(env.get_command_queue(), dev_indexnodeout, CL_TRUE, 0, loopsize * sizeof(data_t), host_tmp, 0, NULL, NULL);
 
-	clEnqueueWriteBuffer(env.get_command_queue(), dev_indexnode, CL_TRUE, 0, loopsize * sizeof(IndexNode1), host_indexnode, 0, NULL, NULL);
+	//clEnqueueWriteBuffer(env.get_command_queue(), dev_indexnode, CL_TRUE, 0, loopsize * sizeof(data_t), host_indexnode, 0, NULL, NULL);
 	end = std::chrono::high_resolution_clock::now();
 	elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+	
+	/*for (int i = 0; i < 100; i++) {
+		printf("%d %d\n", getKey(host_tmp[i]), getValue(host_tmp[i]));
+	}*/
 	timer["sort"] = elapsedtime;
+	
+	//delete[] host_tmp;
 
 	if (DEBUG) {
 		std::cout << "sort" << elapsedtime << "ms" << std::endl;
@@ -335,7 +354,7 @@ void SyncLoopExample::assign_host_memory() {
 	host_a = new int[loopsize * 2];
 	host_P = new int[loopsize];
 	host_Q = new int[loopsize];
-	host_indexnode = new IndexNode1[loopsize];
+	host_indexnode = new data_t[loopsize];
 }
 
 void SyncLoopExample::destroy_host_memory()
@@ -358,7 +377,8 @@ void SyncLoopExample::assign_device_memory() {
 	
 	dev_raceflag = clCreateBuffer(env.get_context(), CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int), &raceFlag, &clStatus);
 
-	dev_indexnode = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(IndexNode1), host_indexnode, &clStatus);
+	dev_indexnode = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(data_t), host_indexnode, &clStatus);
+	dev_indexnodeout = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE, loopsize * sizeof(data_t), NULL, &clStatus);
 	dev_buffer = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE, loopsize * 2 * sizeof(int), NULL, &clStatus);
 	
 }
@@ -369,6 +389,7 @@ void SyncLoopExample::destroy_device_memory() {
 	clReleaseMemObject(dev_P);
 	clReleaseMemObject(dev_Q);
 	clReleaseMemObject(dev_indexnode);
+	clReleaseMemObject(dev_indexnodeout);
 	clReleaseMemObject(dev_buffer);
 	clReleaseMemObject(dev_raceflag);
 }

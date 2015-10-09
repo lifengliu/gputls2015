@@ -1,4 +1,8 @@
 
+typedef uint2 data_t;
+#define getKey(a) ((a).x)
+#define getValue(a) ((a).y)
+#define makeData(k,v) ((uint2)((k),(v)))
 
 typedef struct IndexNode {
     int index;
@@ -300,11 +304,7 @@ __kernel void loop_task_kernel(__global int *P, __global int *Q, __global int *a
 
 // ---------------------------------------evaluate    -------------------------------------------------------------
 
-typedef struct IndexNode1 {
-    int groupid;
-	int localid;
-    int condVal;
-} IndexNode1;
+
 
 __kernel void branch_evaluate_task_kernel
 (
@@ -315,19 +315,20 @@ __global int *c,
 __const int N, 
 __const int size1, 
 __const int size2,
-__global IndexNode1 *index_node
+__global data_t *index_node
 )
 {
     int b0 = get_group_id(0);
     int t0 = get_local_id(0);
+	int tid = get_global_id(0);
 
     #define floord(n,d) (((n)<0) ? -((-(n)+(d)-1)/(d)) : (n)/(d))
     for (int c0 = 32 * b0; c0 < N; c0 += 1048576)
       if (N >= t0 + c0 + 1) {
 		    int i = get_global_id(0);
-			index_node[i].condVal = select(0, 1, c[t0 + c0] > 0);
-			index_node[i].groupid = b0;
-			index_node[i].localid = t0;
+			index_node[i] = makeData(select(0, 1, c[t0 + c0] > 0), tid);
+			//setKey(index_node[i], select(0, 1, c[t0 + c0] > 0));
+			//setValue(index_node[i], tid);
 	  }
 }
 
@@ -345,12 +346,20 @@ __global int *c,
 __const int N, 
 __const int size1, 
 __const int size2,
-__global IndexNode1 *index_node
+__global data_t *index_node
 )
 {
-    int tid = get_global_id(0);
-    int b0 = index_node[tid].groupid;  //reference redirection
-	int t0 = index_node[tid].localid;
+    int tid = getValue(index_node[get_global_id(0)]);
+    //globalWorkSize = localWorkSize * numberOfGroups; 
+
+	// tid  = b0 * workgroupsize + t0;
+	
+	int b0 = tid / get_local_size(0);
+	int t0 = tid % get_local_size(0);
+	
+	//int b0 = index_node[tid].groupid;  
+	//reference redirection
+	//int t0 = index_node[tid].localid;
 
     //int b0 = get_group_id(0);
     //int t0 = get_local_id(0);

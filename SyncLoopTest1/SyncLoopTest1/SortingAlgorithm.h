@@ -13,7 +13,7 @@ public:
 	// Sort IN[N] into OUT[N] using the specified context and device
 	// This function will be called between two clFinish, and timed.
 
-	virtual bool sort(std::string src, OpenCLRuntimeEnv& env, int n, cl_mem in, cl_mem out) const = 0;
+	virtual bool sort(int n, cl_mem in, cl_mem out) const = 0;
 	
 	// Get total memory I/O of the algorithm for size N (Load + Store bytes)
 	virtual double memoryIO(int n) const = 0;
