@@ -5,17 +5,15 @@
 #include <chrono>
 #include <iostream>
 
-bool ParallelBitonicASort::sort(std::string src, OpenCLRuntimeEnv & env, int n, cl_mem in, cl_mem out) const
+ParallelBitonicASort::ParallelBitonicASort(const OpenCLRuntimeEnv & env, std::string src):
+	env(env), src(src)
 {
-
-
 	int clStatus;
-	cl_program program;
+	this->src = src;
 
 	const char *program_source = src.c_str();
 
 	program = clCreateProgramWithSource(env.get_context(), 1, (const char **)&program_source, NULL, &clStatus);
-
 
 	cl_device_id device = env.get_device_id();
 
@@ -30,11 +28,23 @@ bool ParallelBitonicASort::sort(std::string src, OpenCLRuntimeEnv & env, int n, 
 		clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, len, log, NULL);
 		printf("%s\n", log);
 		delete[] log;
-		return false;
+		return;
 	}
 
+	kernel = clCreateKernel(program, "ParallelBitonic_A", &clStatus);
+}
 
-	cl_kernel kernel = clCreateKernel(program, "ParallelBitonic_A", &clStatus);
+ParallelBitonicASort::~ParallelBitonicASort()
+{
+	clReleaseKernel(kernel);
+	clReleaseProgram(program);
+}
+
+
+
+bool ParallelBitonicASort::sort(int n, cl_mem in, cl_mem out) const
+{
+	int clStatus;
 	int nk = 0;
 
 	cl_mem buffers[2];
@@ -69,9 +79,7 @@ bool ParallelBitonicASort::sort(std::string src, OpenCLRuntimeEnv & env, int n, 
 			nk++;
 		}
 
-	// printf("n=2^%d nk=%d\n",log2(n),nk);
-	clReleaseKernel(kernel);
-	clReleaseProgram(program);
+	clFinish(env.get_command_queue());
 
 	return (current == 1);  // output must be in OUT
 }

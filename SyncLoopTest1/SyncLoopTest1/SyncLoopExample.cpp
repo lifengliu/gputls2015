@@ -303,26 +303,31 @@ void SyncLoopExample::evaluateBranch()
 	//clEnqueueReadBuffer(env.get_command_queue(), dev_indexnode, CL_TRUE, 0, loopsize * sizeof(data_t), host_indexnode, 0, NULL, NULL);
 
 	std::string s1 = loadFile("SortKernels.cl");
-	ParallelBitonicLocalSort psort(env, 128, s1);
-	
+	//ParallelBitonicLocalSort psort(env, 128, s1);
+	ParallelBitonicASort psort(env, s1);
 
 	start = std::chrono::high_resolution_clock::now();
 	psort.sort(loopsize, dev_indexnode, dev_indexnodeout);
 	//std::sort(host_indexnode, host_indexnode + loopsize);
 
-	//data_t *host_tmp = new data_t[loopsize];
-	//clEnqueueReadBuffer(env.get_command_queue(), dev_indexnodeout, CL_TRUE, 0, loopsize * sizeof(data_t), host_tmp, 0, NULL, NULL);
+	
+	
 
 	//clEnqueueWriteBuffer(env.get_command_queue(), dev_indexnode, CL_TRUE, 0, loopsize * sizeof(data_t), host_indexnode, 0, NULL, NULL);
 	end = std::chrono::high_resolution_clock::now();
 	elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 	
-	/*for (int i = 0; i < 100; i++) {
+	data_t *host_tmp = new data_t[loopsize];
+	
+	clEnqueueReadBuffer(env.get_command_queue(), dev_indexnodeout, CL_TRUE, 0, loopsize * sizeof(data_t), host_tmp, 0, NULL, NULL);
+	
+	for (int i = 0; i < 100; i++) {
 		printf("%d %d\n", getKey(host_tmp[i]), getValue(host_tmp[i]));
-	}*/
+	}
+	
 	timer["sort"] = elapsedtime;
 	
-	//delete[] host_tmp;
+	delete[] host_tmp;
 
 	if (DEBUG) {
 		std::cout << "sort" << elapsedtime << "ms" << std::endl;
