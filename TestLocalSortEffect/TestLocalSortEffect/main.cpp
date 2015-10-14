@@ -131,9 +131,9 @@ int main(int argc, char *argv[]) {
 			gege.unremappedGPU();
 			
 			gege.evaluateBranch();
-			//gege.rearrangePartial(256);
+			gege.rearrangePartial(256);
 			
-			gege.rearrangeFully();
+			//gege.rearrangeFully();
 			gege.remappedGPU();
 
 		}
