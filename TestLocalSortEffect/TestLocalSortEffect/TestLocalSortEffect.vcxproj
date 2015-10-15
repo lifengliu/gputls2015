@@ -125,8 +125,8 @@
     <ClCompile Include="GegeExample.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="OpenCLRuntimeEnv.cpp" />
-    <ClCompile Include="ParallelBitonicCSort.cpp" />
-    <ClCompile Include="ParallelBitonicLocalSort.cpp" />
+    <ClCompile Include="ParallelBitonicCSort1.cpp" />
+    <ClCompile Include="ParallelBitonicLocalSort1.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="data_t.h" />

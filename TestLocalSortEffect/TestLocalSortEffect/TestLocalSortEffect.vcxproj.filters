@@ -21,16 +21,16 @@
     <ClCompile Include="OpenCLRuntimeEnv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ParallelBitonicLocalSort.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="data_t.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GegeExample.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ParallelBitonicCSort.cpp">
+    <ClCompile Include="ParallelBitonicCSort1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ParallelBitonicLocalSort1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
