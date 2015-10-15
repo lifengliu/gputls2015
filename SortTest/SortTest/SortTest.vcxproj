@@ -123,9 +123,16 @@
   <ItemGroup>
     <ClCompile Include="data_t1.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="OpenCLRuntimeEnv.cpp" />
+    <ClCompile Include="ParallelBitonicCSort2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="data_t.h" />
+    <ClInclude Include="OpenCLRuntimeEnv.h" />
+    <ClInclude Include="ParallelBitonicCSort.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sort.cl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
