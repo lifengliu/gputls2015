@@ -39,6 +39,9 @@
     <ClCompile Include="ParallelBitonicASort.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ParallelBitonicCSort.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OpenCLRuntimeEnv.h">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="ParallelBitonicASort.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParallelBitonicCSort.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

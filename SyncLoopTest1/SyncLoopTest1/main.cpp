@@ -130,25 +130,33 @@ int main(int argc, char *argv[]) {
 
 			showDeviceInfo(plat_device_map[i][j]);
 			
-			int calcsize1 = 512;
-			int calcsize2 = 512;
+			int calcsize1 = 1024 ;
+			int calcsize2 = 1024 ;
 			
+
+			fprintf(f, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "loopsize", "device", "dc", "evaluateBranchGPU",
+				"sort", "remappedLoopGPU", "unremappedGPU", "seqCPU"
+				);
+
 			for (int loopsize = 256; loopsize <= 1048576 * 2; loopsize *= 2) {
 				SyncLoopExample sle(env, s, loopsize, calcsize1, calcsize2);
-
-				sle.sequentialCPU();
-				sle.unremappedGPU();
+				sle.dependencyChecking();
+				//sle.sequentialCPU();
+				//sle.unremappedGPU();
+				//sle.unremappedGPU();
 
 				// --------------------
-				sle.dependencyChecking();
+				
 				sle.evaluateBranch();
+				sle.partialSort(256);
+				//sle.fullySort();
 				sle.remappedGPU();
-
 				auto m1 = sle.getTimer();
 
 				fprintf(f, "%d\t%d\t%I64d\t%I64d\t%I64d\t%I64d\t%I64d\t%I64d\n", loopsize, j + 1, m1["dc"], m1["evaluateBranchGPU"],
-					m1["sort"], m1["remappedLoopGPU"], m1["unremappedGPU"], m1["seqCPU"]
-					);
+					m1["fullySort"], m1["remappedLoopGPU"], m1["unremappedGPU"], 0ll
+				);
+
 			}
 
 			//int loopsize = 1048576;

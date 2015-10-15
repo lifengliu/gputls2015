@@ -285,7 +285,16 @@ __global int *buffer
 // ---------------------------------------------------------------------------------------------------
 
 
-__kernel void loop_task_kernel(__global int *P, __global int *Q, __global int *a, __global int *c, __const int N, __const int size1, __const int size2)
+__kernel void loop_task_kernel
+(
+__global int *P, 
+__global int *Q, 
+__global int *a, 
+__global int *c, 
+__const int N, 
+__const int size1, 
+__const int size2
+)
 {
     int b0 = get_group_id(0);
     int t0 = get_local_id(0);

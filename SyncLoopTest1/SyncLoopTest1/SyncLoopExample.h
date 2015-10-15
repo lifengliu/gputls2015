@@ -39,8 +39,13 @@ public:
 	
 	void sequentialCPU();
 	void unremappedGPU();
+	
 	void remappedGPU();
+
 	void evaluateBranch();
+	void partialSort(int wg);
+	void fullySort();
+
 	void dependencyChecking();
 	const map<string, long long> &getTimer() const;
 

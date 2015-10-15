@@ -150,6 +150,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ParallelBitonicASort.cpp" />
+    <ClCompile Include="ParallelBitonicCSort.cpp" />
     <ClCompile Include="ParallelBitonicLocalSort.cpp" />
     <ClCompile Include="PGExample.cpp" />
     <ClCompile Include="sortcommon.cpp" />
@@ -161,6 +162,7 @@
   <ItemGroup>
     <ClInclude Include="MiniCL.h" />
     <ClInclude Include="ParallelBitonicASort.h" />
+    <ClInclude Include="ParallelBitonicCSort.h" />
     <ClInclude Include="ParallelBitonicLocalSort.h" />
     <ClInclude Include="PGExample.h" />
     <ClInclude Include="sortcommon.h" />

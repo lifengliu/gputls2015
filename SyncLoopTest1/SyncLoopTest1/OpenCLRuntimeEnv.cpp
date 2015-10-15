@@ -5,6 +5,7 @@
 
 OpenCLRuntimeEnv::OpenCLRuntimeEnv()
 {
+
 }
 
 
@@ -40,5 +41,10 @@ cl_device_id OpenCLRuntimeEnv::get_device_id() const
 cl_context OpenCLRuntimeEnv::get_context() const
 {
 	return context;
+}
+
+cl_event OpenCLRuntimeEnv::get_event() const
+{
+	return ev;
 }
 
