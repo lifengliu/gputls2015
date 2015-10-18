@@ -2,6 +2,9 @@
 #include "data_t.h"
 #include <algorithm>
 #include <list>
+#include <iostream>
+
+
 #pragma warning(disable : 4996)
 
 #define ALLOWB (2+4+8)
@@ -55,8 +58,8 @@ bool ParallelBitonicCSort::sort(int n, cl_mem in, cl_mem out, int times) const
 	int t1 = 0;
 	for (int length = 1; length < n; length <<= 1)
 	{
-		t1++;
-		printf(" times  = %d\n", t1);
+		t1 ++;
+		//printf(" times  = %d\n", t1);
 		if (t1 == times) break;
 
 		int inc = length;
@@ -137,12 +140,35 @@ bool ParallelBitonicCSort::sort(int n, cl_mem in, cl_mem out, int times) const
 			if (doLocal > 0) {
 				clSetKernelArg(kernel, 3, sizeof(data_t) * doLocal * wg, NULL);   // DOLOCAL values / thread
 			}
-
+			
 
 			size_t global_size = nThreads;
 			size_t local_size = wg;
 
-			clEnqueueNDRangeKernel(env.get_command_queue(), kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+			cl_event t_ev;
+			clEnqueueNDRangeKernel(env.get_command_queue(), kernel, 1, NULL, &global_size, &local_size, 0, NULL, &t_ev);
+			
+			clWaitForEvents(1, &t_ev);
+
+			unsigned long start1 = 0;
+			unsigned long end1 = 0;
+			unsigned long queued1 = 0;
+			unsigned long submited1 = 0;
+
+			
+			clGetEventProfilingInfo(t_ev, CL_PROFILING_COMMAND_QUEUED, sizeof(queued1), &queued1, NULL);
+			clGetEventProfilingInfo(t_ev, CL_PROFILING_COMMAND_SUBMIT, sizeof(submited1), &submited1, NULL);
+			clGetEventProfilingInfo(t_ev, CL_PROFILING_COMMAND_START, sizeof(start1), &start1, NULL);
+			clGetEventProfilingInfo(t_ev, CL_PROFILING_COMMAND_END, sizeof(end1), &end1, NULL);
+
+			unsigned long dur1 = submited1 - queued1;
+			unsigned long dur2 = start1 - submited1;
+			unsigned long dur3 = end1 - start1;
+
+			clReleaseEvent(t_ev);
+
+			std::cout << "kernel time = " << dur3 << std::endl;
+
 			clEnqueueBarrier(env.get_command_queue());
 
 			// if (mLastN != n) printf("LENGTH=%d INC=%d KID=%d\n",length,inc,kid); // DEBUG
