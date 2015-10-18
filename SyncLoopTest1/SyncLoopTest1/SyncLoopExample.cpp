@@ -27,17 +27,7 @@ using std::make_pair;
 using std::string;
 
 
-const static bool DEBUG = true;
-
-/*struct IndexNode {
-	int index;
-	int condVal;
-
-	bool operator <(const IndexNode& rhs) {
-		return this->condVal < rhs.condVal || (this->condVal == rhs.condVal && this->index < rhs.index);
-	}
-};*/
-
+const static bool DEBUG = false;
 
 
 SyncLoopExample::SyncLoopExample(const OpenCLRuntimeEnv& env, string kernelSourceCode, int loopsize, int calcSize1, int calsSize2) :
@@ -50,22 +40,25 @@ SyncLoopExample::SyncLoopExample(const OpenCLRuntimeEnv& env, string kernelSourc
 	this->env = env;
 
 	init_opencl_resources();
-
-	assign_host_memory();
-	init_host_memory();
-	assign_device_memory();
-
 }
 
 SyncLoopExample::~SyncLoopExample() {
-	destroy_device_memory();
-	destroy_host_memory();
 	release_opencl_resources();
-
-	printf("%s\n", "I destroy myself");
-
 }
 
+void SyncLoopExample::init0()
+{
+	
+	assign_host_memory();
+	init_host_memory();
+	assign_device_memory();
+}
+
+void SyncLoopExample::destroy0()
+{
+	destroy_device_memory();
+	destroy_host_memory();
+}
 
 void SyncLoopExample::init_opencl_resources() {
 	cl_int clStatus;
@@ -100,15 +93,24 @@ void SyncLoopExample::init_host_memory()
 {
 	memset(host_a, 0, sizeof(int) * loopsize * 2);
 
-	for (int i = 0; i < loopsize / 2; i++) {
+	/*for (int i = 0; i < loopsize / 2; i++) {
 		host_c[i] = 100;
 	}
 
 	for (int i = loopsize / 2; i < loopsize; i++) {
 		host_c[i] = -100;
+	}*/
+
+	for (int i = 0; i < loopsize; i++) {
+		if (i % 2 == 0) {
+			host_c[i] = 100;
+		}
+		else {
+			host_c[i] = -100;
+		}
 	}
 
-	std::random_shuffle(host_c, host_c + loopsize);
+	//std::random_shuffle(host_c, host_c + loopsize);
 
 	for (int i = 0; i < loopsize; i++) {
 		host_Q[i] = i;
@@ -122,10 +124,9 @@ void SyncLoopExample::init_host_memory()
 
 	std::random_shuffle(host_P, host_P + loopsize);
 
-
 	memset(host_indexnode, 0, sizeof(data_t) * loopsize);
 
-} 
+}
 
 
 static int comp1(int CALC_SIZE) {
@@ -176,7 +177,6 @@ void SyncLoopExample::sequentialCPU()
 
 void SyncLoopExample::unremappedGPU()
 {
-	init_host_memory();
 
 	int clStatus;
 	loopKernelOrigin = clCreateKernel(program, "loop_task_kernel", &clStatus);
@@ -246,7 +246,8 @@ void SyncLoopExample::remappedGPU()
 	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
 	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-	timer["remappedLoopGPU"] = elapsedtime;
+	putToTimer("remappedLoopGPU", elapsedtime);
+	//timer["remappedLoopGPU"] = elapsedtime;
 
 	if (DEBUG) {
 		std::cout << "remapped loop gpu = " << elapsedtime << "ms" << std::endl;
@@ -342,7 +343,9 @@ void SyncLoopExample::partialSort(int wg) {
 		printf("%d %d\n", getKey(host_tmp[i]), getValue(host_tmp[i]));
 	}
 
-	timer["partialSort"] = cpu_elapsedtime;
+	putToTimer("partialSort" + std::to_string(wg), cpu_elapsedtime);
+
+	//timer["partialSort"] = cpu_elapsedtime;
 
 	delete[] host_tmp;
 
@@ -442,15 +445,30 @@ void SyncLoopExample::destroy_host_memory()
 void SyncLoopExample::assign_device_memory() {
 	int clStatus;
 	
-	dev_c = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(int), host_c, &clStatus);
-	dev_a = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * 2 * sizeof(int), host_a, &clStatus);
-	dev_P = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(int), host_P, &clStatus);
-	dev_Q = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(int), host_Q, &clStatus);
+	//dev_c = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(int), host_c, &clStatus);
+	//dev_a = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * 2 * sizeof(int), host_a, &clStatus);
+	//dev_P = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(int), host_P, &clStatus);
+	//dev_Q = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(int), host_Q, &clStatus);
 	
+	dev_c = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE, loopsize * sizeof(int), NULL, &clStatus);
+	dev_a = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE, loopsize * 2 * sizeof(int), NULL, &clStatus);
+	dev_P = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE, loopsize * sizeof(int), NULL, &clStatus);
+	dev_Q = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE, loopsize * sizeof(int), NULL, &clStatus);
+
+	clEnqueueWriteBuffer(env.get_command_queue(), dev_c, CL_TRUE, 0, loopsize *sizeof(int), host_c, 0, NULL, NULL);
+	clEnqueueWriteBuffer(env.get_command_queue(), dev_a, CL_TRUE, 0, loopsize * 2 * sizeof(int), host_a, 0, NULL, NULL);
+	clEnqueueWriteBuffer(env.get_command_queue(), dev_P, CL_TRUE, 0, loopsize * sizeof(int), host_P, 0, NULL, NULL);
+	clEnqueueWriteBuffer(env.get_command_queue(), dev_Q, CL_TRUE, 0, loopsize * sizeof(int), host_Q, 0, NULL, NULL);
+
+
 	dev_raceflag = clCreateBuffer(env.get_context(), CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int), &raceFlag, &clStatus);
 
-	dev_indexnode = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(data_t), host_indexnode, &clStatus);
+	//dev_indexnode = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, loopsize * sizeof(data_t), host_indexnode, &clStatus);
+	
+	dev_indexnode = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE, loopsize * sizeof(data_t), NULL, &clStatus);
+
 	dev_indexnodeout = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE, loopsize * sizeof(data_t), NULL, &clStatus);
+
 	dev_buffer = clCreateBuffer(env.get_context(), CL_MEM_READ_WRITE, loopsize * 2 * sizeof(int), NULL, &clStatus);
 	
 }
@@ -508,7 +526,7 @@ void SyncLoopExample::dc_write_on_a()
 	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
 	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-	timer["dcwriteonaKernel"] = elapsedtime;
+	//timer["dcwriteonaKernel"] = elapsedtime;
 
 	if (DEBUG) {
 		std::cout << "dcwriteonaKernel" << elapsedtime << "ms" << std::endl;
@@ -547,11 +565,31 @@ void SyncLoopExample::dc_read_on_a()
 	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
 	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-	timer["dcreadonaKernel"] = elapsedtime;
+	//timer["dcreadonaKernel"] = elapsedtime;
 
 	if (DEBUG) {
 		std::cout << "dcreadonaKernel" << elapsedtime << "ms" << std::endl;
 	}
 
+}
+
+void SyncLoopExample::putToTimer(string s, long long v)
+{
+	
+	if (timer.count(s) == 0) {
+		timer[s] = v;
+		return;
+	}
+
+	int t = 0;
+	
+	string s1 = s + std::to_string(t);
+	while (timer.count(s1) != 0) {
+		s1 = s + std::to_string(++t);
+	}
+
+	printf("%s\n", (s1).c_str());
+	
+	timer[s1] = v;
 }
 

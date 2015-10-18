@@ -35,8 +35,13 @@ using std::string;
 class SyncLoopExample {
 public:
 	SyncLoopExample(const OpenCLRuntimeEnv& env, string kernelSourceCode, int loopsize, int calcSize1, int calcSize2);
+	
+	
 	virtual ~SyncLoopExample();
 	
+	void init0();
+	void destroy0();
+
 	void sequentialCPU();
 	void unremappedGPU();
 	
@@ -47,6 +52,7 @@ public:
 	void fullySort();
 
 	void dependencyChecking();
+	
 	const map<string, long long> &getTimer() const;
 
 private:
@@ -101,6 +107,8 @@ private:
 
 	void dc_write_on_a();
 	void dc_read_on_a();
+
+	void putToTimer(string s, long long v);
 
 	map<string, long long> timer;
 };

@@ -88,6 +88,13 @@ string loadFile(const string& fileLoc) {
 	return str;
 }
 
+void printMapKeys(const map<string, long long> m, FILE *f) {
+	for (auto it = m.begin(); it != m.end(); ++it) {
+		const string& key = it->first;
+		fprintf(f, "\t%s", key.c_str());
+	}
+}
+
 
 int main(int argc, char *argv[]) {
 
@@ -133,74 +140,88 @@ int main(int argc, char *argv[]) {
 			int calcsize1 = 1024 ;
 			int calcsize2 = 1024 ;
 			
-
-			fprintf(f, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "loopsize", "device", "dc", "evaluateBranchGPU",
-				"sort", "remappedLoopGPU", "unremappedGPU", "seqCPU"
-				);
-
-			for (int loopsize = 256; loopsize <= 1048576 * 2; loopsize *= 2) {
+			int startloop = 256;
+			int endloop = 1048576 * 2;
+			
+			for (int loopsize = startloop; loopsize <= endloop; loopsize *= 2) {
 				SyncLoopExample sle(env, s, loopsize, calcsize1, calcsize2);
-				sle.dependencyChecking();
-				//sle.sequentialCPU();
-				//sle.unremappedGPU();
-				//sle.unremappedGPU();
+				
+				sle.init0();
+				sle.sequentialCPU();
+				sle.destroy0();
 
 				// --------------------
-				
+				sle.init0();
+				sle.dependencyChecking();
+				sle.unremappedGPU();
+				sle.destroy0();
+
+				sle.init0();
+				sle.dependencyChecking();
+				sle.evaluateBranch();
+				sle.partialSort(128);
+				sle.remappedGPU();  
+				sle.destroy0();
+
+				// --------------------
+
+				// --------------------
+				sle.init0();
+				sle.dependencyChecking();
 				sle.evaluateBranch();
 				sle.partialSort(256);
-				//sle.fullySort();
 				sle.remappedGPU();
+				sle.destroy0();
+				// --------------------
+
+
+				sle.init0();
+				sle.dependencyChecking();
+				sle.evaluateBranch();
+				sle.fullySort();
+				sle.remappedGPU();  
+				sle.destroy0();
+
+				// ---------------------
+
+				PGExample pge(env, s1, loopsize, calcsize1, calcsize2);
+				pge.specExecute();
+				pge.dependencyChecking();
+				
+				//fprintf(f, "%I64d\t%I64d\n", m2["dc"], m2["specloopexec"]);
+
+
+
 				auto m1 = sle.getTimer();
+				auto m2 = pge.getTimer();
 
-				fprintf(f, "%d\t%d\t%I64d\t%I64d\t%I64d\t%I64d\t%I64d\t%I64d\n", loopsize, j + 1, m1["dc"], m1["evaluateBranchGPU"],
-					m1["fullySort"], m1["remappedLoopGPU"], m1["unremappedGPU"], 0ll
-				);
+				m1.insert(m2.begin(), m2.end());
+				
+				if (loopsize == startloop) {
+					fprintf(f, "%s\t%s", "loopsize", "device");
+					printMapKeys(m1, f);
+					fprintf(f, "\n");
+				}
+
+				fprintf(f, "%d\t%d", loopsize, j + 1);
+
+				for (auto it = m1.begin(); it != m1.end(); ++it) {
+					//const string& key = it->first;
+					long long v = it->second;
+					//fprintf(f, "\t%s", key.c_str());
+					fprintf(f, "\t%I64d", v);
+				}
+
+				fprintf(f, "\n");
+
+
+
+				/*fprintf(f, "%d\t%d\t%I64d\t%I64d\t%I64d\t%I64d\t%I64d\t%I64d\n", loopsize, j + 1, m1["dc"], m1["evaluateBranchGPU"],
+					m1["partialSort"], m1["remappedLoopGPU"], m1["unremappedGPU"], 0ll
+				);*/
 
 			}
 
-			//int loopsize = 1048576;
-			//int calcsize1 = 1024;
-			//int calcsize2 = 1024;
-
-			/*int dn = 1024;
-			data_t *d1 = new data_t[dn];
-			data_t *d2 = new data_t[dn];
-			
-			for (int i = 0; i < dn; i++) {
-				setKey(d1[i], dn - i + 50);
-				setValue(d1[i], i);
-			}
-			cl_mem in = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(data_t) * dn, d1, &clStatus);
-			cl_mem out = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(data_t) * dn, NULL, &clStatus);
-
-			ParallelBitonicASort psort;
-			psort.sort(sortsrc, env, dn, in, out);
-			clFinish(env.get_command_queue());
-			clStatus = clEnqueueReadBuffer(env.get_command_queue(), out, CL_TRUE, 0, sizeof(data_t) * dn, d2, 0, NULL, NULL);
-
-			for (int i = 0; i < 1024; i++) {
-				printf("%ud %ud\n", getKey(d2[i]), getValue(d2[i]));
-			}
-			delete[] d1;
-			delete[] d2;
-			clReleaseMemObject(in);
-			clReleaseMemObject(out);
-			*/
-
-			
-			
-
-			
-			/*for (auto it = m1.begin(); it != m1.end(); ++it)
-			{
-				const string& key = it->first;
-				long long value = it->second;
-				fprintf(f, "%s\t%I64d\n", key.c_str(), value);
-			}
-
-			puts(""); */
-			// ---------------------
 			
 			/*for (int loopsize = 256; loopsize <= 1048576 * 2; loopsize *= 2) {
 			

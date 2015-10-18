@@ -94,7 +94,7 @@ void PGExample::specExecute()
 	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
 	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-	timer["specloopexec"] = elapsedtime;
+	timer["specloopexecParagon"] = elapsedtime;
 
 	if (DEBUG) {
 		std::cout << "specloopexec" << elapsedtime << "ms" << std::endl;
@@ -113,7 +113,7 @@ void PGExample::dependencyChecking()
 
 	auto end = std::chrono::high_resolution_clock::now(); //end measurement here
 	auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-	timer["dc"] = elapsedtime;
+	timer["dcParagon"] = elapsedtime;
 }
 
 const map<string, long long> PGExample::getTimer() const

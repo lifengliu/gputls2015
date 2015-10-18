@@ -270,7 +270,7 @@ __global int *buffer
     int t0 = get_local_id(0);
 
     #define floord(n,d) (((n)<0) ? -((-(n)+(d)-1)/(d)) : (n)/(d))
-    for (int c0 = 32 * b0; c0 < N; c0 += 1048576)
+	for (int c0 = 32 * b0; c0 < N; c0 += 1048576)
       if (N >= t0 + c0 + 1) {
 			if (c[t0 + c0] > 0) {
 			    raceFlag[0] |= buffer[P[t0 + c0]] > 0 ;
@@ -331,14 +331,19 @@ __global data_t *index_node
     int t0 = get_local_id(0);
 	int tid = get_global_id(0);
 
-    #define floord(n,d) (((n)<0) ? -((-(n)+(d)-1)/(d)) : (n)/(d))
+	int bitp = 4;
+	int pathv = 0;
+	
+	#define floord(n,d) (((n)<0) ? -((-(n)+(d)-1)/(d)) : (n)/(d))
     for (int c0 = 32 * b0; c0 < N; c0 += 1048576)
       if (N >= t0 + c0 + 1) {
-		    int i = get_global_id(0);
-			index_node[i] = makeData(select(0, 1, c[t0 + c0] > 0), tid);
-			//setKey(index_node[i], select(0, 1, c[t0 + c0] > 0));
-			//setValue(index_node[i], tid);
+			pathv = ((c[t0 + c0] > 0) ? 1 : 0) * bitp;
+			bitp >>= 1;
 	  }
+
+	
+	index_node[tid] = makeData(pathv, tid);
+
 }
 
 
