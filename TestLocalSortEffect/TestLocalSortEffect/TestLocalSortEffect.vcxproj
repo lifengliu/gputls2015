@@ -127,6 +127,7 @@
     <ClCompile Include="OpenCLRuntimeEnv.cpp" />
     <ClCompile Include="ParallelBitonicCSort1.cpp" />
     <ClCompile Include="ParallelBitonicLocalSort1.cpp" />
+    <ClCompile Include="Test1.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="data_t.h" />
@@ -134,10 +135,16 @@
     <ClInclude Include="OpenCLRuntimeEnv.h" />
     <ClInclude Include="ParallelBitonicCSort.h" />
     <ClInclude Include="ParallelBitonicLocalSort.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Test1.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="gege.cl" />
     <None Include="SortKernels.cl" />
+    <None Include="test1.cl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TestLocalSortEffect.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -110,7 +110,7 @@ void SyncLoopExample::init_host_memory()
 		}
 	}
 
-	//std::random_shuffle(host_c, host_c + loopsize);
+	std::random_shuffle(host_c, host_c + loopsize);
 
 	for (int i = 0; i < loopsize; i++) {
 		host_Q[i] = i;

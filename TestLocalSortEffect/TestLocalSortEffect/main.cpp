@@ -18,6 +18,8 @@
 #include <map>
 
 #include "GegeExample.h"
+#include "Test1.h"
+#include <chrono>
 
 #pragma warning(disable : 4996)
 
@@ -103,7 +105,7 @@ int main(int argc, char *argv[]) {
 
 	string sortsrc = loadFile("SortKernels.cl");
 	//printf("%s", sortsrc.c_str());
-	string src = loadFile("gege.cl");
+	string src = loadFile("test1.cl");
 
 	for (size_t i = 0; i < num_platforms; i++) {
 		clStatus = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 0, NULL, &device_num[i]);
@@ -113,29 +115,33 @@ int main(int argc, char *argv[]) {
 		//CL_DEVICE_TYPE_ALL
 		clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, device_num[i], plat_device_map[i], NULL);
 
-		for (size_t j = 0; j < device_num[i]; j++) {
-			OpenCLRuntimeEnv env;
-			env.set_device(plat_device_map[i][j]);
-			cl_context context = clCreateContext(NULL, 1, &plat_device_map[i][j], NULL, NULL, &clStatus);
-			env.set_context(context);
-			cl_command_queue_properties props[] = { CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0 };
-			cl_command_queue queue = clCreateCommandQueueWithProperties(context, plat_device_map[i][j], props, &clStatus);
-			env.set_command_queue(queue);
+		//int j = 0;
+		for (int arr = 100000; arr < 80000000; arr *= 1.5) {
+			for (size_t j = 0; j < device_num[i]; j++) {
+				OpenCLRuntimeEnv env;
+				env.set_device(plat_device_map[i][j]);
+				cl_context context = clCreateContext(NULL, 1, &plat_device_map[i][j], NULL, NULL, &clStatus);
+				env.set_context(context);
+				cl_command_queue_properties props[] = { CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0 };
+				cl_command_queue queue = clCreateCommandQueueWithProperties(context, plat_device_map[i][j], props, &clStatus);
+				env.set_command_queue(queue);
 
 
-			showDeviceInfo(plat_device_map[i][j]);
+				showDeviceInfo(plat_device_map[i][j]);
 
-			GegeExample gege(env, src, 32768, 5120, 5120);
-			
-			gege.unremappedGPU();
-			gege.unremappedGPU();
-			
-			gege.evaluateBranch();
-			gege.rearrangePartial(256);
-			
-			//gege.rearrangeFully();
-			gege.remappedGPU();
+				Test1 tt(env, src, arr);
+				auto start = std::chrono::high_resolution_clock::now();
+				tt.mem_prep();
+				tt.exec();
+				auto end = std::chrono::high_resolution_clock::now(); //end measurement here
+				auto elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
+				std::cout << "time = " << elapsedtime << "nanosecond" << std::endl;
+
+				fprintf(f, "%d\t%d\t%I64d\n", arr, j, elapsedtime);
+				clReleaseCommandQueue(queue);
+				clReleaseContext(context);
+			}
 		}
 	}
 

@@ -33,6 +33,9 @@
     <ClCompile Include="ParallelBitonicLocalSort1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Test1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OpenCLRuntimeEnv.h">
@@ -50,9 +53,21 @@
     <ClInclude Include="ParallelBitonicCSort.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Test1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="SortKernels.cl" />
     <None Include="gege.cl" />
+    <None Include="test1.cl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TestLocalSortEffect.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

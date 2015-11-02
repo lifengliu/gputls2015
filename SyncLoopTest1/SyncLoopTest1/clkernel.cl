@@ -331,7 +331,7 @@ __global data_t *index_node
     int t0 = get_local_id(0);
 	int tid = get_global_id(0);
 
-	int bitp = 4;
+	int bitp = 2;
 	int pathv = 0;
 	
 	#define floord(n,d) (((n)<0) ? -((-(n)+(d)-1)/(d)) : (n)/(d))

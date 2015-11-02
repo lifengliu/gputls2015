@@ -167,7 +167,7 @@ bool ParallelBitonicCSort::sort(int n, cl_mem in, cl_mem out, int times) const
 
 			clReleaseEvent(t_ev);
 
-			std::cout << "kernel time = " << dur3 << std::endl;
+			//std::cout << "kernel time = " << dur3 << std::endl;
 
 			clEnqueueBarrier(env.get_command_queue());
 

@@ -19,6 +19,8 @@
 #include <chrono>
 #include "data_t.h"
 #include "ParallelBitonicCSort.h"
+#include "ParallelBitonicLocalSort.h"
+#include <random>
 
 #pragma warning(disable : 4996)
 
@@ -123,23 +125,27 @@ int main(int argc, char *argv[]) {
 			env.set_device(plat_device_map[i][j]);
 			cl_context context = clCreateContext(NULL, 1, &plat_device_map[i][j], NULL, NULL, &clStatus);
 			env.set_context(context);
-			cl_command_queue_properties props[] = { CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0 };
-			cl_command_queue queue = clCreateCommandQueueWithProperties(context, plat_device_map[i][j], props, &clStatus);
+			//cl_command_queue_properties props[] = { CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0 };
+			//cl_command_queue queue = clCreateCommandQueueWithProperties(context, plat_device_map[i][j], props, &clStatus);
+			cl_command_queue queue = clCreateCommandQueue(context, plat_device_map[i][j], NULL, &clStatus);
 			env.set_command_queue(queue);
 
 
 			showDeviceInfo(plat_device_map[i][j]);
 
 
-			int len = (1 << 12);
+			int len = (1 << 21);
 
-			for (int VD = 2; VD <= 16; VD++) {
-				for (int SORT = 8; SORT <= 13; SORT++) {
+			std::default_random_engine generator;
+			std::uniform_int_distribution<int> distribution(0, 1 << 25);
+
+			//for (int VD = 2; VD <= 16; VD++) {
+				for (int SORT = 13; SORT <= 13; SORT++) {
 					data_t *host_in = new data_t[len];
 					data_t *host_out = new data_t[len];
 
 					for (int k = 0; k < len; k++) {
-						setKey(host_in[k], k % VD);
+						setKey(host_in[k], distribution(generator));
 						setValue(host_in[k], k);
 					}
 
@@ -152,17 +158,18 @@ int main(int argc, char *argv[]) {
 					string s = loadFile("sort.cl");
 
 					ParallelBitonicCSort psort(env, 256, s);
-
+					//ParallelBitonicLocalSort psort(env, 256, s);
 
 					auto start = std::chrono::high_resolution_clock::now();
+					//psort.sort(len, dev_in, dev_out, 256);
 					psort.sort(len, dev_in, dev_out, 100);    // 8:  2 inc 2 dec     9:    4 inc 4 dec    10  8 inc  8 dec
 					auto end = std::chrono::high_resolution_clock::now();
 					auto cpu_elapsedtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-					std::cout << "partial sort = " << cpu_elapsedtime << "ns" << std::endl;
+					std::cout << SORT <<  "   partial sort = " << cpu_elapsedtime << "ns" << std::endl;
 
 					clEnqueueReadBuffer(env.get_command_queue(), dev_out, CL_TRUE, 0, len * sizeof(data_t), host_in, 0, NULL, NULL);
 
-					int badsum = 0;
+					/*int badsum = 0;
 					int C = 64;
 
 					for (int u = 0; u < len; u += C) {
@@ -178,7 +185,7 @@ int main(int argc, char *argv[]) {
 							badsum++;
 						}
 					}
-
+*/
 
 					/*for (int k = 0; k < len; k++) {
 						if (k % 64 == 0) puts("---------------------------");
@@ -186,16 +193,15 @@ int main(int argc, char *argv[]) {
 
 					}*/
 
-					printf("value domain = %d\n", VD);
 					printf("sort part = %d\n", SORT);
-					printf("badsum = %d\n", badsum);
+					//printf("badsum = %d\n", badsum);
 					
 					delete[] host_in;
 					delete[] host_out;
 					clReleaseMemObject(dev_in);
 					clReleaseMemObject(dev_out);
 				}
-			}
+			//}
 
 		}
 	}
